@@ -45,14 +45,6 @@ swap_size_kb=$((swap_size * 1024))
 # 日志记录开始
 log_message "开始设置交换空间，目标大小: ${swap_size}MB，路径: ${swap_file_path}"
 
-# 检查当前交换空间是否已经足够
-current_swap_size=$(swapon --show=NAME,SIZE --bytes | grep -w "$swap_file_path" | awk '{print $2}')
-if [[ "$current_swap_size" -ge "$swap_size_kb" ]]; then
-    log_message "当前交换空间已经足够，无需重新创建。当前大小: $((current_swap_size / 1024 / 1024))MB"
-    echo "当前交换空间已经足够，无需重新创建。"
-    exit 0
-fi
-
 # 禁用旧的交换空间（如果有）
 if swapon --show | grep -q "$swap_file_path"; then
     log_message "禁用旧的交换空间..."
