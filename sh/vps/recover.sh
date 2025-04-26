@@ -36,8 +36,10 @@ echo "解压 ${BACKUP_ZIP} → tmp/"
 unzip -o "${BACKUP_ZIP}"
 
 # 3.1 询问是否恢复 root
+env_ans_lower=""
 read -rp "是否恢复 /root 目录？ [y/N]：" ans
-if [[ "${ans,,}" == y* ]]; then
+env_ans_lower="${ans,,}"
+if [[ "${env_ans_lower}" == y* ]]; then
   echo "解压 root.zip → tmp/"
   unzip -o root.zip
   echo "覆盖 tmp/root/ 到 /root/"
@@ -46,7 +48,8 @@ fi
 
 # 3.2 询问是否恢复 home
 read -rp "是否恢复 /home 目录？ [y/N]：" ans
-if [[ "${ans,,}" == y* ]]; then
+env_ans_lower="${ans,,}"
+if [[ "${env_ans_lower}" == y* ]]; then
   echo "解压 home.zip → tmp/"
   unzip -o home.zip
   echo "覆盖 tmp/home/ 到 /home/"
@@ -55,7 +58,8 @@ fi
 
 # 3.3 询问是否恢复 SSH 配置和密钥
 read -rp "是否恢复 SSH 服务端和密钥对？ [y/N]：" ans
-if [[ "${ans,,}" == y* ]]; then
+env_ans_lower="${ans,,}"
+if [[ "${env_ans_lower}" == y* ]]; then
   echo "设置 /root/.ssh 权限"
   chmod 700 /root/.ssh
   chmod 600 /root/.ssh/id_* 2>/dev/null || true
@@ -66,7 +70,16 @@ if [[ "${ans,,}" == y* ]]; then
   for key in RSAAuthentication PubkeyAuthentication PermitRootLogin PasswordAuthentication; do
     sudo sed -i "/^${key}/d" /etc/ssh/sshd_config
   done
-  # 插入新配置到文件头
+  # 删除所有包含 Port 的行
+  sudo sed -i '/Port/d' /etc/ssh/sshd_config
+
+  # 插入新配置到文件头（顺序：RSA, Pubkey, PermitRootLogin, PasswordAuthentication, Port）
+  sudo sed -i '1iPort 22' /etc/ssh/sshd_config
+  read -rp "输入 SSH 端口号 (留空则保留默认 22)：" SSH_PORT
+  if [[ -n "$SSH_PORT" ]]; then
+    sudo sed -i "/^Port /d" /etc/ssh/sshd_config
+    sudo sed -i "1iPort ${SSH_PORT}" /etc/ssh/sshd_config
+  fi
   sudo sed -i '1iPasswordAuthentication no' /etc/ssh/sshd_config
   sudo sed -i '1iPermitRootLogin yes' /etc/ssh/sshd_config
   sudo sed -i '1iPubkeyAuthentication yes' /etc/ssh/sshd_config
@@ -80,16 +93,18 @@ echo "恢复完成，tmp/ 中保留解压内容，可按需手动清理。"
 
 # 4. 恢复 crontab 定时任务
 read -rp "是否覆盖当前服务器的 crontab？ [y/N]：" ans
-if [[ "${ans,,}" == y* ]]; then
+env_ans_lower="${ans,,}"
+if [[ "${env_ans_lower}" == y* ]]; then
   echo "  - 清空当前 crontab 任务"
   crontab -r || true
   echo "  - 导入 tmp/crontab.txt"
   crontab "${SCRIPT_DIR}/tmp/crontab.txt"
 fi
 
-# 4. 删除临时目录 tmp
+# 5. 删除临时目录 tmp
 read -rp "是否删除脚本目录下的 tmp？ [y/N]：" ans
-if [[ "${ans,,}" == y* ]]; then
+env_ans_lower="${ans,,}"
+if [[ "${env_ans_lower}" == y* ]]; then
   echo "删除临时目录 ${SCRIPT_DIR}/tmp"
   rm -rf "${SCRIPT_DIR}/tmp"
 fi
