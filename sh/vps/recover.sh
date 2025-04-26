@@ -78,6 +78,15 @@ fi
 
 echo "恢复完成，tmp/ 中保留解压内容，可按需手动清理。"
 
+# 4. 恢复 crontab 定时任务
+read -rp "是否覆盖当前服务器的 crontab？ [y/N]：" ans
+if [[ "${ans,,}" == y* ]]; then
+  echo "  - 清空当前 crontab 任务"
+  crontab -r || true
+  echo "  - 导入 tmp/crontab.txt"
+  crontab "${SCRIPT_DIR}/tmp/crontab.txt"
+fi
+
 # 4. 删除临时目录 tmp
 read -rp "是否删除脚本目录下的 tmp？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
