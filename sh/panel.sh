@@ -86,16 +86,25 @@ function set_dns() {
 }
 
 function show_sysinfo() {
+  CYAN='\033[1;36m'
+
   echo -e "${BLUE}========= 系统信息 =========${NC}"
 
   CPU_MODEL=$(lscpu | grep "Model name" | sed 's/.*:\s*//')
   CPU_CORES=$(nproc)
-  CPU_FREQ=$(lscpu | grep "MHz" | awk '{print $3 " MHz"}' | head -1)
+
+  CPU_FREQ_RAW=$(lscpu | grep "CPU MHz" | awk '{print $3}')
+  CPU_FREQ=${CPU_FREQ_RAW:-"不可用"}
+
   CACHE_L1=$(lscpu | grep "L1d cache" | awk '{print $3}')
   CACHE_L2=$(lscpu | grep "L2 cache" | awk '{print $3}')
   CACHE_L3=$(lscpu | grep "L3 cache" | awk '{print $3}')
-  AES=$(lscpu | grep -q aes && echo "✔ Enabled" || echo "✘ Disabled")
-  VMX=$(lscpu | grep -Eq 'vmx|svm' && echo "✔ Enabled" || echo "✘ Disabled")
+  CACHE_L1=${CACHE_L1:-"N/A"}
+  CACHE_L2=${CACHE_L2:-"N/A"}
+  CACHE_L3=${CACHE_L3:-"N/A"}
+
+  AES=$(lscpu | grep -q aes && echo -e "${CYAN}✔ Enabled${NC}" || echo -e "${RED}✘ Disabled${NC}")
+  VMX=$(lscpu | grep -Eq 'vmx|svm' && echo -e "${CYAN}✔ Enabled${NC}" || echo -e "${RED}✘ Disabled${NC}")
 
   MEM_USED=$(free -h | awk '/Mem:/ {print $3}')
   MEM_TOTAL=$(free -h | awk '/Mem:/ {print $2}')
@@ -120,25 +129,25 @@ function show_sysinfo() {
   IPV4_ASN=$(echo "$IPINFO" | jq -r .org)
   IPV4_LOC=$(echo "$IPINFO" | jq -r '.city + " / " + .region + " / " + .country')
 
-  echo -e "CPU 型号          : $CPU_MODEL"
-  echo -e "CPU 核心数        : $CPU_CORES"
-  echo -e "CPU 频率          : $CPU_FREQ"
-  echo -e "CPU 缓存          : L1: $CACHE_L1 / L2: $CACHE_L2 / L3: $CACHE_L3"
+  echo -e "CPU 型号          : ${CYAN}$CPU_MODEL${NC}"
+  echo -e "CPU 核心数        : ${CYAN}$CPU_CORES${NC}"
+  echo -e "CPU 频率          : ${CYAN}$CPU_FREQ MHz${NC}"
+  echo -e "CPU 缓存          : ${CYAN}L1: $CACHE_L1 / L2: $CACHE_L2 / L3: $CACHE_L3${NC}"
   echo -e "AES-NI指令集      : $AES"
   echo -e "VM-x/AMD-V支持    : $VMX"
-  echo -e "内存              : $MEM_USED / $MEM_TOTAL"
-  echo -e "Swap              : $SWAP_USED / $SWAP_TOTAL"
-  echo -e "硬盘空间          : $DISK_USED / $DISK_TOTAL"
-  echo -e "启动盘路径        : $DISK_PATH"
-  echo -e "系统在线时间      : $UPTIME"
-  echo -e "负载              : $LOAD_AVG"
-  echo -e "系统              : $OS"
-  echo -e "架构              : $ARCH"
-  echo -e "内核              : $KERNEL"
-  echo -e "TCP加速方式       : $TCP_CONG"
-  echo -e "虚拟化架构        : $VIRT"
-  echo -e "IPV4 ASN          : $IPV4_ASN"
-  echo -e "IPV4 位置         : $IPV4_LOC"
+  echo -e "内存              : ${CYAN}$MEM_USED / $MEM_TOTAL${NC}"
+  echo -e "Swap              : ${CYAN}$SWAP_USED / $SWAP_TOTAL${NC}"
+  echo -e "硬盘空间          : ${CYAN}$DISK_USED / $DISK_TOTAL${NC}"
+  echo -e "启动盘路径        : ${CYAN}$DISK_PATH${NC}"
+  echo -e "系统在线时间      : ${CYAN}$UPTIME${NC}"
+  echo -e "负载              : ${CYAN}$LOAD_AVG${NC}"
+  echo -e "系统              : ${CYAN}$OS${NC}"
+  echo -e "架构              : ${CYAN}$ARCH (64 Bit)${NC}"
+  echo -e "内核              : ${CYAN}$KERNEL${NC}"
+  echo -e "TCP加速方式       : ${CYAN}$TCP_CONG${NC}"
+  echo -e "虚拟化架构        : ${CYAN}$VIRT${NC}"
+  echo -e "IPV4 ASN          : ${CYAN}$IPV4_ASN${NC}"
+  echo -e "IPV4 位置         : ${CYAN}$IPV4_LOC${NC}"
 
   pause_and_back
 }
