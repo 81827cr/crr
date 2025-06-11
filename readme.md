@@ -19,3 +19,11 @@ curl -sSL https://raw.githubusercontent.com/81827cr/cr/refs/heads/main/sh/set_sw
 curl -sSL https://raw.githubusercontent.com/81827cr/cr/refs/heads/main/sh/linux_security_check.sh -o ./linux_security_check.sh && bash ./linux_security_check.sh && rm -f ./linux_security_check.sh
 ```
 
+
+
+## 禁用 PHP 高危函数列表
+
+```
+exec,passthru,shell_exec,system,proc_open,popen,show_source,eval,assert,putenv,pcntl_exec,phpinfo
+```
+

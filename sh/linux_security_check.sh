@@ -6,15 +6,23 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[1;34m'; NC
 echo -e "${BLUE}========= 🛡 Linux 安全检查脚本 v1.2 =========${NC}"
 start=$(date +%s)
 
-# 1. SSH 爆破尝试
+# 1. SSH爆破尝试
 echo -e "\n${YELLOW}--- [1] SSH 爆破尝试（Failed password） ---${NC}"
-[ -f /var/log/auth.log ] && \
-grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head || echo "(未找到日志)"
+if [ -f /var/log/auth.log ]; then
+  grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head
+else
+  # 使用 journalctl
+  journalctl _SYSTEMD_UNIT=sshd.service -o cat | grep "Failed password" | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head || echo "(未找到日志)"
+fi
 
 # 2. 最近成功登录 IP
 echo -e "\n${YELLOW}--- [2] 最近成功登录 IP ---${NC}"
-[ -f /var/log/auth.log ] && \
-grep "Accepted password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head || echo "(未找到日志)"
+if [ -f /var/log/auth.log ]; then
+  grep "Accepted password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head
+else
+  # 使用 journalctl
+  journalctl _SYSTEMD_UNIT=sshd.service -o cat | grep "Accepted password" | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr | head || echo "(未找到日志)"
+fi
 
 # 3. 最近登录记录
 echo -e "\n${YELLOW}--- [3] 最近登录记录 ---${NC}"
