@@ -56,6 +56,16 @@ case "$choice" in
       exit 1
     fi
 
+    # 4. 是否通过 UFW 开放中转机端口
+    read -rp "是否通过 UFW 开放中转机端口 $forward_port? (y/n, 默认 y): " ufw_choice
+    ufw_choice=${ufw_choice:-y}
+    if [[ "$ufw_choice" =~ ^[Yy]$ ]]; then
+      echo ">>> 允许 UFW 访问端口 $forward_port..."
+      ufw allow "$forward_port" || true
+    else
+      echo ">>> 跳过 UFW 端口开放"
+    fi
+
     echo "✅ 开始配置..."
 
     # 步骤1：开启 IP 转发并保存配置
@@ -67,7 +77,7 @@ case "$choice" in
 
     # 步骤2：设置 UFW 允许 FORWARD
     echo ">>> 设置 UFW 允许 FORWARD..."
-    ufw default allow FORWARD
+    ufw default allow FORWARD || true
 
     # 步骤3：实时添加 iptables 规则
     echo ">>> 添加实时 iptables 规则..."
@@ -107,12 +117,10 @@ EOF
 
     echo "✅ 转发配置完成并已持久化为 systemd 服务！"
     ;;
-
   2)
     echo "📋 当前 iptables nat 规则如下："
     iptables -t nat -L -n --line-numbers
     ;;
-
   *)
     echo "❌ 无效选择，脚本退出"
     exit 1
