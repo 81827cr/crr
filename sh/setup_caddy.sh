@@ -16,12 +16,14 @@ function menu() {
   echo "=== Caddy 管理工具 ==="
   echo "1) 安装并配置 Caddy 反向代理"
   echo "2) 查看完整配置文件"
+  echo "3) 卸载 Caddy 及其所有配置"
   echo "0) 退出"
   read -rp "请输入操作编号: " choice
 
   case "$choice" in
     1) install_and_config ;;
     2) view_full_config ;;
+    3) uninstall_caddy ;;
     0) exit 0 ;;
     *) echo "无效输入，请重新运行脚本。"; exit 1 ;;
   esac
@@ -55,9 +57,25 @@ function install_and_config() {
   email="${email:-$DEFAULT_EMAIL}"
 
   read -rp "请输入你要反代的域名（如 git.example.com）: " domain
-  read -rp "请输入本地反代端口（如 3000）: " port
+  if [[ -z "$domain" ]]; then
+    echo "未输入域名，已取消操作。"
+    exit 1
+  fi
 
-  echo ">>> 正在写入配置到 $CADDY_FILE..."
+  read -rp "请输入本地反代端口（如 3000）: " port
+  if [[ -z "$port" ]]; then
+    echo "未输入端口，已取消操作。"
+    exit 1
+  fi
+
+  echo ">>> 写入配置到 $CADDY_FILE..."
+
+  # 如果 Caddyfile 不存在，创建新文件并写入注释
+  if [[ ! -f "$CADDY_FILE" ]]; then
+    echo "# Caddy 配置文件自动创建于 $(date)" > "$CADDY_FILE"
+  fi
+
+  # 追加配置段
   {
     echo ""
     echo "$domain {"
@@ -69,7 +87,11 @@ function install_and_config() {
 
   echo ">>> 重启 Caddy 并设置开机自启..."
   systemctl daemon-reexec
-  systemctl restart caddy
+  if ! systemctl restart caddy; then
+    echo "❌ Caddy 启动失败，请使用以下命令查看详情："
+    echo "   journalctl -u caddy.service --no-pager | tail -n 30"
+    exit 1
+  fi
   systemctl enable caddy
 
   echo ">>> 配置成功！请确保 $domain 的 DNS 已指向当前服务器 IP。"
@@ -79,8 +101,31 @@ function install_and_config() {
 function view_full_config() {
   echo ">>> 当前 Caddyfile 配置如下："
   echo "==============================="
-  cat "$CADDY_FILE"
+  if [[ -f "$CADDY_FILE" ]]; then
+    cat "$CADDY_FILE"
+  else
+    echo "（尚未创建任何配置）"
+  fi
   echo "==============================="
+}
+
+# 卸载 Caddy 和配置
+function uninstall_caddy() {
+  echo ">>> 正在卸载 Caddy..."
+  systemctl stop caddy || true
+  systemctl disable caddy || true
+
+  apt purge -y caddy
+  apt autoremove -y
+
+  echo ">>> 正在删除 Caddy 源和 GPG 密钥..."
+  rm -f /etc/apt/sources.list.d/caddy.list
+  rm -f /usr/share/keyrings/caddy.gpg
+
+  echo ">>> 正在删除配置文件目录 /etc/caddy/"
+  rm -rf /etc/caddy/
+
+  echo ">>> Caddy 已完整卸载并清理。"
 }
 
 # 启动菜单
