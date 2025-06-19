@@ -75,9 +75,9 @@ case "$choice" in
     grep -Fxq "$RULE1" "$IPTABLES_SCRIPT" || echo "$RULE1" >> "$IPTABLES_SCRIPT"
     grep -Fxq "$RULE2" "$IPTABLES_SCRIPT" || echo "$RULE2" >> "$IPTABLES_SCRIPT"
 
-    # 设置 crontab：检测是否已有这条 @reboot，若无则添加
+    # 设置 crontab：检测是否已有这条 @reboot，若无则添加（含延迟）
     echo ">>> 配置 crontab 自启动..."
-    CRON_LINE="@reboot $IPTABLES_SCRIPT"
+    CRON_LINE="@reboot sleep 30 && $IPTABLES_SCRIPT"
     crontab -l 2>/dev/null | grep -Fxq "$CRON_LINE" \
       || ( crontab -l 2>/dev/null; echo "$CRON_LINE" ) | crontab -
 
