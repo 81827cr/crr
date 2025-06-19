@@ -45,7 +45,7 @@ function set_timezone() {
 }
 
 function set_swap() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/cr/refs/heads/main/sh/set_swap.sh -o ./set_swap.sh && \
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o ./set_swap.sh && \
   bash ./set_swap.sh && rm -f ./set_swap.sh
   pause_and_back
 }
@@ -57,7 +57,7 @@ function enable_bbr() {
 }
 
 function security_check() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/cr/refs/heads/main/sh/linux_security_check.sh -o ./linux_security_check.sh && \
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o ./linux_security_check.sh && \
   bash ./linux_security_check.sh && rm -f ./linux_security_check.sh
   pause_and_back
 }
