@@ -6,12 +6,12 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
-# 持久化脚本路径
+# 定义路径
 IPTABLES_SCRIPT="/root/sh/iptables.sh"
 SYSTEMD_SERVICE="/etc/systemd/system/iptables-restore.service"
 mkdir -p "$(dirname "$IPTABLES_SCRIPT")"
 
-# 如果脚本不存在，创建并写入 shebang，然后赋可执行权限
+# 如果脚本不存在，初始化持久化脚本
 if [[ ! -f "$IPTABLES_SCRIPT" ]]; then
   cat > "$IPTABLES_SCRIPT" <<'EOF'
 #!/bin/bash
@@ -27,7 +27,7 @@ EOF
   chmod +x "$IPTABLES_SCRIPT"
 fi
 
-# 功能菜单
+# 菜单
 echo "请选择操作："
 echo "1) 创建端口转发"
 echo "2) 查看 iptables NAT 规则"
@@ -56,19 +56,17 @@ case "$choice" in
       exit 1
     fi
 
-    # 4. 是否通过 UFW 开放中转机端口
-    read -rp "是否通过 UFW 开放中转机端口 $forward_port? (y/n, 默认 y): " ufw_choice
-    ufw_choice=${ufw_choice:-y}
-    if [[ "$ufw_choice" =~ ^[Yy]$ ]]; then
-      echo ">>> 允许 UFW 访问端口 $forward_port..."
-      ufw allow "$forward_port" || true
-    else
-      echo ">>> 跳过 UFW 端口开放"
+    # 4. 是否允许中转机端口通过防火墙
+    read -rp "是否开启中转机监听端口防火墙允许规则？(y/n，默认 y): " open_port
+    open_port=${open_port:-y}
+    if [[ "$open_port" == [Yy] ]]; then
+      echo ">>> 开启防火墙端口: $forward_port"
+      ufw allow "$forward_port"
     fi
 
     echo "✅ 开始配置..."
 
-    # 步骤1：开启 IP 转发并保存配置
+    # 步骤1：开启 IP 转发并写入配置文件
     echo ">>> 开启 IP 转发..."
     echo 1 > /proc/sys/net/ipv4/ip_forward
     sed -i '/^net.ipv4.ip_forward/d' /etc/sysctl.conf
@@ -77,23 +75,25 @@ case "$choice" in
 
     # 步骤2：设置 UFW 允许 FORWARD
     echo ">>> 设置 UFW 允许 FORWARD..."
-    ufw default allow FORWARD || true
-
-    # 步骤3：实时添加 iptables 规则
-    echo ">>> 添加实时 iptables 规则..."
-    iptables -t nat -A PREROUTING -p tcp --dport "$forward_port" -j DNAT --to-destination "$target_ip":"$target_port"
-    iptables -t nat -A POSTROUTING -p tcp -d "$target_ip" --dport "$target_port" -j MASQUERADE
+    ufw default allow FORWARD
 
     # 构造规则文本
     RULE1="iptables -t nat -A PREROUTING -p tcp --dport $forward_port -j DNAT --to-destination $target_ip:$target_port"
     RULE2="iptables -t nat -A POSTROUTING -p tcp -d $target_ip --dport $target_port -j MASQUERADE"
 
-    # 步骤4：追加到持久化脚本（去重）
+    # 步骤3：添加实时规则（避免重复）
+    echo ">>> 添加实时 iptables 规则..."
+    iptables -t nat -C PREROUTING -p tcp --dport "$forward_port" -j DNAT --to-destination "$target_ip:$target_port" 2>/dev/null \
+      || iptables -t nat -A PREROUTING -p tcp --dport "$forward_port" -j DNAT --to-destination "$target_ip:$target_port"
+    iptables -t nat -C POSTROUTING -p tcp -d "$target_ip" --dport "$target_port" -j MASQUERADE 2>/dev/null \
+      || iptables -t nat -A POSTROUTING -p tcp -d "$target_ip" --dport "$target_port" -j MASQUERADE
+
+    # 步骤4：写入持久化脚本（去重）
     echo ">>> 写入持久化脚本 $IPTABLES_SCRIPT ..."
     grep -Fxq "$RULE1" "$IPTABLES_SCRIPT" || echo "$RULE1" >> "$IPTABLES_SCRIPT"
     grep -Fxq "$RULE2" "$IPTABLES_SCRIPT" || echo "$RULE2" >> "$IPTABLES_SCRIPT"
 
-    # 步骤5：创建并启用 systemd 服务来替代 crontab
+    # 步骤5：创建并启用 systemd 服务
     echo ">>> 创建 systemd 服务文件 $SYSTEMD_SERVICE ..."
     cat > "$SYSTEMD_SERVICE" <<EOF
 [Unit]
@@ -110,17 +110,20 @@ RemainAfterExit=true
 WantedBy=multi-user.target
 EOF
 
-    echo ">>> 重新加载并启用服务..."
+    echo ">>> 启用并启动 systemd 服务..."
+    systemctl daemon-reexec
     systemctl daemon-reload
     systemctl enable iptables-restore.service
     systemctl restart iptables-restore.service
 
-    echo "✅ 转发配置完成并已持久化为 systemd 服务！"
+    echo "✅ 转发配置完成并已持久化！"
     ;;
+
   2)
     echo "📋 当前 iptables nat 规则如下："
     iptables -t nat -L -n --line-numbers
     ;;
+
   *)
     echo "❌ 无效选择，脚本退出"
     exit 1
