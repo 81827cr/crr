@@ -99,14 +99,11 @@ function install_and_config() {
 
 # 查看完整配置文件
 function view_full_config() {
-  echo ">>> 当前 Caddyfile 配置如下："
-  echo "==============================="
   if [[ -f "$CADDY_FILE" ]]; then
     cat "$CADDY_FILE"
   else
     echo "（尚未创建任何配置）"
   fi
-  echo "==============================="
 }
 
 # 卸载 Caddy 和配置
