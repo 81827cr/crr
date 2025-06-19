@@ -35,66 +35,51 @@ read -rp "请输入选项 (1 或 2): " choice
 
 case "$choice" in
   1)
-    # 1. 输入中转机监听端口
+    # 输入校验
     read -rp "请输入中转机监听端口 (1-65535): " forward_port
-    if [[ -z "$forward_port" || ! "$forward_port" =~ ^[0-9]+$ || "$forward_port" -lt 1 || "$forward_port" -gt 65535 ]]; then
-      echo "❌ 无效端口，脚本退出"
-      exit 1
-    fi
-
-    # 2. 输入落地机 IP
+    [[ ! "$forward_port" =~ ^[1-9][0-9]{0,4}$ ]] && { echo "❌ 无效端口"; exit 1; }
     read -rp "请输入落地机的 IP 地址: " target_ip
-    if [[ -z "$target_ip" ]]; then
-      echo "❌ IP 地址不能为空，脚本退出"
-      exit 1
-    fi
-
-    # 3. 输入落地机端口
+    [[ -z "$target_ip" ]] && { echo "❌ IP 不能为空"; exit 1; }
     read -rp "请输入落地机的端口 (1-65535): " target_port
-    if [[ -z "$target_port" || ! "$target_port" =~ ^[0-9]+$ || "$target_port" -lt 1 || "$target_port" -gt 65535 ]]; then
-      echo "❌ 无效端口，脚本退出"
-      exit 1
-    fi
+    [[ ! "$target_port" =~ ^[1-9][0-9]{0,4}$ ]] && { echo "❌ 无效端口"; exit 1; }
 
-    # 4. 是否允许中转机端口通过防火墙
-    read -rp "是否开启中转机监听端口防火墙允许规则？(y/n，默认 y): " open_port
+    # 是否开放防火墙端口
+    read -rp "是否开启防火墙允许端口 $forward_port? (y/n，默认 y): " open_port
     open_port=${open_port:-y}
-    if [[ "$open_port" == [Yy] ]]; then
-      echo ">>> 开启防火墙端口: $forward_port"
-      ufw allow "$forward_port"
+    if [[ "$open_port" =~ ^[Yy]$ ]]; then
+      echo ">>> UFW：允许端口 $forward_port"
+      ufw allow "$forward_port" || true
     fi
 
     echo "✅ 开始配置..."
 
-    # 步骤1：开启 IP 转发并写入配置文件
+    # 步骤1：开启 IP 转发并写入 sysctl
     echo ">>> 开启 IP 转发..."
     echo 1 > /proc/sys/net/ipv4/ip_forward
     sed -i '/^net.ipv4.ip_forward/d' /etc/sysctl.conf
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
     sysctl -p
 
-    # 步骤2：设置 UFW 允许 FORWARD
-    echo ">>> 设置 UFW 允许 FORWARD..."
-    ufw default allow FORWARD
+    # 步骤2：设置 UFW FORWARD
+    echo ">>> UFW：允许转发（FORWARD）"
+    ufw default allow FORWARD || true
 
     # 构造规则文本
     RULE1="iptables -t nat -A PREROUTING -p tcp --dport $forward_port -j DNAT --to-destination $target_ip:$target_port"
     RULE2="iptables -t nat -A POSTROUTING -p tcp -d $target_ip --dport $target_port -j MASQUERADE"
 
-    # 步骤3：添加实时规则（避免重复）
-    echo ">>> 添加实时 iptables 规则..."
-    iptables -t nat -C PREROUTING -p tcp --dport "$forward_port" -j DNAT --to-destination "$target_ip:$target_port" 2>/dev/null \
-      || iptables -t nat -A PREROUTING -p tcp --dport "$forward_port" -j DNAT --to-destination "$target_ip:$target_port"
-    iptables -t nat -C POSTROUTING -p tcp -d "$target_ip" --dport "$target_port" -j MASQUERADE 2>/dev/null \
-      || iptables -t nat -A POSTROUTING -p tcp -d "$target_ip" --dport "$target_port" -j MASQUERADE
-
-    # 步骤4：写入持久化脚本（去重）
-    echo ">>> 写入持久化脚本 $IPTABLES_SCRIPT ..."
+    # 步骤3：写入持久化脚本（去重）
+    echo ">>> 写入持久化脚本 $IPTABLES_SCRIPT"
     grep -Fxq "$RULE1" "$IPTABLES_SCRIPT" || echo "$RULE1" >> "$IPTABLES_SCRIPT"
     grep -Fxq "$RULE2" "$IPTABLES_SCRIPT" || echo "$RULE2" >> "$IPTABLES_SCRIPT"
 
-    # 步骤5：创建并启用 systemd 服务
-    echo ">>> 创建 systemd 服务文件 $SYSTEMD_SERVICE ..."
+    # 步骤4：清空现有 NAT 规则，再重启 systemd 服务重新加载
+    echo ">>> 清空现有 NAT 规则..."
+    iptables -t nat -F PREROUTING
+    iptables -t nat -F POSTROUTING
+
+    # 步骤5：创建/更新 systemd 服务文件
+    echo ">>> 生成 systemd 服务 $SYSTEMD_SERVICE"
     cat > "$SYSTEMD_SERVICE" <<EOF
 [Unit]
 Description=Restore iptables NAT rules after boot
@@ -110,8 +95,8 @@ RemainAfterExit=true
 WantedBy=multi-user.target
 EOF
 
-    echo ">>> 启用并启动 systemd 服务..."
-    systemctl daemon-reexec
+    # 步骤6：启用并启动 service
+    echo ">>> 重新加载并启动服务..."
     systemctl daemon-reload
     systemctl enable iptables-restore.service
     systemctl restart iptables-restore.service
@@ -120,7 +105,7 @@ EOF
     ;;
 
   2)
-    echo "📋 当前 iptables nat 规则如下："
+    echo "📋 当前 iptables nat 规则："
     iptables -t nat -L -n --line-numbers
     ;;
 
