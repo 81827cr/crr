@@ -29,6 +29,14 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_
 
 
 
+## caddy反代脚本
+
+```
+curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
+```
+
+
+
 ## 禁用 PHP 高危函数列表
 
 ```
