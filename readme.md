@@ -21,6 +21,14 @@ curl -sSL https://raw.githubusercontent.com/81827cr/cr/refs/heads/main/sh/linux_
 
 
 
+## 端口转发脚本
+
+```
+curl -sSL https://raw.githubusercontent.com/81827cr/cr/refs/heads/main/sh/port_forward.sh -o ./port_forward.sh && bash ./port_forward.sh && rm -f ./port_forward.sh
+```
+
+
+
 ## 禁用 PHP 高危函数列表
 
 ```
