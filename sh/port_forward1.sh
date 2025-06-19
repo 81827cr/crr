@@ -8,7 +8,6 @@ fi
 
 # 持久化脚本路径
 IPTABLES_SCRIPT="/root/sh/iptables.sh"
-SYSTEMD_SERVICE="/etc/systemd/system/iptables-restore.service"
 mkdir -p "$(dirname "$IPTABLES_SCRIPT")"
 
 # 如果脚本不存在，创建并写入 shebang，然后赋可执行权限
@@ -16,13 +15,6 @@ if [[ ! -f "$IPTABLES_SCRIPT" ]]; then
   cat > "$IPTABLES_SCRIPT" <<'EOF'
 #!/bin/bash
 # 本脚本用于重启时恢复 iptables 转发规则
-
-# 开启 IP 转发
-echo 1 > /proc/sys/net/ipv4/ip_forward
-sysctl -w net.ipv4.ip_forward=1
-
-# 设置 UFW 允许 FORWARD（如已安装 UFW）
-ufw default allow FORWARD || true
 EOF
   chmod +x "$IPTABLES_SCRIPT"
 fi
@@ -65,11 +57,11 @@ case "$choice" in
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
     sysctl -p
 
-    # 步骤2：设置 UFW 允许 FORWARD
+    # 步骤4：设置 UFW 允许 FORWARD
     echo ">>> 设置 UFW 允许 FORWARD..."
     ufw default allow FORWARD
 
-    # 步骤3：实时添加 iptables 规则
+    # 步骤2：实时添加 iptables 规则
     echo ">>> 添加实时 iptables 规则..."
     iptables -t nat -A PREROUTING -p tcp --dport "$forward_port" -j DNAT --to-destination "$target_ip":"$target_port"
     iptables -t nat -A POSTROUTING -p tcp -d "$target_ip" --dport "$target_port" -j MASQUERADE
@@ -78,41 +70,23 @@ case "$choice" in
     RULE1="iptables -t nat -A PREROUTING -p tcp --dport $forward_port -j DNAT --to-destination $target_ip:$target_port"
     RULE2="iptables -t nat -A POSTROUTING -p tcp -d $target_ip --dport $target_port -j MASQUERADE"
 
-    # 步骤4：追加到持久化脚本（去重）
+    # 步骤3：追加到持久化脚本（去重）
     echo ">>> 写入持久化脚本 $IPTABLES_SCRIPT ..."
     grep -Fxq "$RULE1" "$IPTABLES_SCRIPT" || echo "$RULE1" >> "$IPTABLES_SCRIPT"
     grep -Fxq "$RULE2" "$IPTABLES_SCRIPT" || echo "$RULE2" >> "$IPTABLES_SCRIPT"
 
-    # 步骤5：创建并启用 systemd 服务来替代 crontab
-    echo ">>> 创建 systemd 服务文件 $SYSTEMD_SERVICE ..."
-    cat > "$SYSTEMD_SERVICE" <<EOF
-[Unit]
-Description=Restore iptables NAT rules after boot
-After=network-online.target
-Wants=network-online.target
+    # 设置 crontab：检测是否已有这条 @reboot，若无则添加（含延迟）
+    echo ">>> 配置 crontab 自启动..."
+    CRON_LINE="@reboot sleep 30 && $IPTABLES_SCRIPT"
+    crontab -l 2>/dev/null | grep -Fxq "$CRON_LINE" \
+      || ( crontab -l 2>/dev/null; echo "$CRON_LINE" ) | crontab -
 
-[Service]
-Type=oneshot
-ExecStart=$IPTABLES_SCRIPT
-RemainAfterExit=true
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    echo ">>> 重新加载并启用服务..."
-    systemctl daemon-reload
-    systemctl enable iptables-restore.service
-    systemctl restart iptables-restore.service
-
-    echo "✅ 转发配置完成并已持久化为 systemd 服务！"
+    echo "✅ 转发配置完成！"
     ;;
-
   2)
     echo "📋 当前 iptables nat 规则如下："
     iptables -t nat -L -n --line-numbers
     ;;
-
   *)
     echo "❌ 无效选择，脚本退出"
     exit 1
