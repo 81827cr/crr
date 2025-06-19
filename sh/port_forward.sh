@@ -23,6 +23,10 @@ sysctl -w net.ipv4.ip_forward=1
 
 # 设置 UFW 允许 FORWARD（如已安装 UFW）
 ufw default allow FORWARD || true
+
+# 清空已有的 NAT 规则
+iptables -t nat -F PREROUTING
+iptables -t nat -F POSTROUTING
 EOF
   chmod +x "$IPTABLES_SCRIPT"
 fi
