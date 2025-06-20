@@ -1,4 +1,4 @@
-## Linux 管理面板脚本
+## Linux 管理面板
 
 ```
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/panel.sh -o ./panel.sh && chmod +x ./panel.sh && ./panel.sh
@@ -13,7 +13,7 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_s
 
 
 
-## Linux 一键安全检查脚本
+## Linux 一键安全检查
 
 ```
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o ./linux_security_check.sh && bash ./linux_security_check.sh && rm -f ./linux_security_check.sh
@@ -21,7 +21,7 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux
 
 
 
-## 端口转发脚本
+## 端口转发设置
 
 ```
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o ./port_forward.sh && bash ./port_forward.sh && rm -f ./port_forward.sh
@@ -29,7 +29,7 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_
 
 
 
-## caddy反代脚本
+## caddy反代设置
 
 ```
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
