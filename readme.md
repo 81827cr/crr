@@ -35,6 +35,12 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
 ```
 
+## socks5出口设置
+
+```
+curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/socks-manager.sh -o ./socks-manager.sh && bash ./socks-manager.sh && rm -f ./socks-manager.sh
+```
+
 
 
 ## 禁用 PHP 高危函数列表
