@@ -8,7 +8,6 @@ set -euo pipefail
 #   配置目录：/root/sh/socks-manager
 # ==============================
 
-# 根目录，可按需修改
 BASE_DIR="/root/sh/socks-manager"
 CONF_DIR="$BASE_DIR/conf.d"
 MAIN_CONF="$BASE_DIR/danted.conf"
@@ -50,13 +49,12 @@ method: none
 user.privileged: root
 user.notprivileged: nobody
 
-## 引入所有子配置
 include "$CONF_DIR/*.conf"
 EOF
 
   cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=Socks 出口 管理 (Dante)
+Description=Socks 管理 (Dante)
 After=network-online.target
 Wants=network-online.target
 
@@ -93,7 +91,7 @@ create_socks() {
   [[ -z "$BIND_ADDR" ]] && { echo "已取消。"; return; }
 
   SOCKS_PORT=$(read_port "请输入 Socks 监听端口: ")
-  NODE_PORT  =$(read_port "请输入节点服务本地端口: ")
+  NODE_PORT=$(read_port "请输入节点服务本地端口: ")
 
   read -rp "请输入用户名 (留空则不启用认证): " AUTH_USER
   if [[ -n "$AUTH_USER" ]]; then
@@ -123,27 +121,11 @@ method: $METHOD
 user.privileged: root
 user.notprivileged: nobody
 
-client pass {
-    from: 0.0.0.0/0 to: 0.0.0.0/0
-    log: connect disconnect error
-}
-client pass {
-    from: ::/0 to: ::/0
-    log: connect disconnect error
-}
+client pass { from: 0.0.0.0/0 to: 0.0.0.0/0 log: connect disconnect error }
+client pass { from: ::/0    to: ::/0    log: connect disconnect error }
 
-pass {
-    from: 0.0.0.0/0 to: 127.0.0.1 port = $NODE_PORT
-    protocol: tcp udp
-    method: $METHOD
-    log: connect disconnect error
-}
-pass {
-    from: ::/0 to: ::1 port = $NODE_PORT
-    protocol: tcp udp
-    method: $METHOD
-    log: connect disconnect error
-}
+pass { from: 0.0.0.0/0 to: 127.0.0.1 port = $NODE_PORT protocol: tcp udp method: $METHOD log: connect disconnect error }
+pass { from: ::/0    to: ::1    port = $NODE_PORT protocol: tcp udp method: $METHOD log: connect disconnect error }
 EOF
 
   echo "✅ 写入配置：$CONF_FILE"
@@ -205,4 +187,4 @@ main() {
   done
 }
 
-main "$@"
+main
