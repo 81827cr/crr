@@ -1,20 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 # ==============================
-# Socks5 出口 管理脚本
-# 交互式菜单：创建 / 查看 / 删除
-# 基于 Dante (danted)，配置目录：/root/sh/socks-manager
+#   Socks5 出口 管理脚本
+#   交互式菜单：创建 / 查看 / 删除
+#   基于 Dante (danted)
+#   配置目录：/root/sh/socks-manager
 # ==============================
 
-# 根目录，可按需修改\ nBASE_DIR="/root/sh/socks-manager"
+# 根目录，可按需修改
+BASE_DIR="/root/sh/socks-manager"
 CONF_DIR="$BASE_DIR/conf.d"
 MAIN_CONF="$BASE_DIR/danted.conf"
 SERVICE_FILE="/etc/systemd/system/socks-manager.service"
 SERVICE_NAME="socks-manager"
 
 ensure_root() {
-  [[ $EUID -ne 0 ]] && { echo "请以 root 用户运行此脚本" >&2; exit 1; }
+  [[ $EUID -ne 0 ]] && {
+    echo "请以 root 用户运行此脚本" >&2
+    exit 1
+  }
 }
 
 check_danted() {
@@ -51,7 +56,7 @@ EOF
 
   cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=Socks 出口 管理 (Dante) Service
+Description=Socks 出口 管理 (Dante)
 After=network-online.target
 Wants=network-online.target
 
@@ -69,27 +74,26 @@ EOF
   systemctl restart "$SERVICE_NAME"
 }
 
-# 校验端口
 read_port() {
   local prompt="$1" port
   while :; do
     read -rp "$prompt" port
     if [[ "$port" =~ ^[1-9][0-9]{0,4}$ ]] && (( port<=65535 )); then
-      echo "$port"; return
-    else
-      echo "❌ 端口需在 1–65535 之间，请重新输入。" >&2
+      echo "$port"
+      return
     fi
+    echo "❌ 端口需在 1–65535 之间，请重新输入。" >&2
   done
 }
 
-# 创建新 Socks 出口
 create_socks() {
-  echo "--- 创建新的 Socks 出口 ---"
+  echo
+  echo ">>> 创建新的 Socks 出口"
   read -rp "请输入监听地址 (IPv4 或 IPv6, 留空取消): " BIND_ADDR
   [[ -z "$BIND_ADDR" ]] && { echo "已取消。"; return; }
 
   SOCKS_PORT=$(read_port "请输入 Socks 监听端口: ")
-  NODE_PORT=$(read_port "请输入节点服务本地端口: ")
+  NODE_PORT  =$(read_port "请输入节点服务本地端口: ")
 
   read -rp "请输入用户名 (留空则不启用认证): " AUTH_USER
   if [[ -n "$AUTH_USER" ]]; then
@@ -110,7 +114,7 @@ create_socks() {
   fi
 
   cat > "$CONF_FILE" <<EOF
-# 自动生成：$BIND_ADDR:$SOCKS_PORT → 本机 $NODE_PORT
+# $BIND_ADDR:$SOCKS_PORT → 本机 $NODE_PORT
 logoutput: syslog
 internal: $BIND_ADDR port = $SOCKS_PORT
 external: *
@@ -147,49 +151,58 @@ EOF
   echo "👉 已启动：$BIND_ADDR:$SOCKS_PORT (method=$METHOD)"
 }
 
-# 列出配置
 list_socks() {
-  echo "--- 列出所有配置 ---"
+  echo
+  echo ">>> 列出所有配置"
   mapfile -t files < <(ls "$CONF_DIR"/*.conf 2>/dev/null || true)
-  if (( ${#files[@]} == 0 )); then echo "（无任何配置）"; return; fi
+  (( ${#files[@]} )) || { echo "（无任何配置）"; return; }
   for i in "${!files[@]}"; do
     printf "%2d) %s\n" $((i+1)) "$(basename "${files[i]}")"
   done
 }
 
-# 删除配置
 delete_socks() {
-  echo "--- 删除配置 ---"
+  echo
+  echo ">>> 删除配置"
   mapfile -t files < <(ls "$CONF_DIR"/*.conf 2>/dev/null || true)
-  if (( ${#files[@]} == 0 )); then echo "（无可删除配置）"; return; fi
+  (( ${#files[@]} )) || { echo "（无可删除配置）"; return; }
   list_socks
   read -rp "请输入要删除的序号 (留空取消): " idx
   [[ -z "$idx" ]] && { echo "已取消。"; return; }
-  if ! [[ "$idx" =~ ^[1-9][0-9]*$ ]] || (( idx<1 || idx>${#files[@]} )); then echo "❌ 无效序号" >&2; return; fi
+  if ! [[ "$idx" =~ ^[1-9][0-9]*$ ]] || (( idx<1 || idx>${#files[@]} )); then
+    echo "❌ 无效序号" >&2; return
+  fi
   rm -f "${files[idx-1]}"
   echo "✔️ 已删除 $(basename "${files[idx-1]}")"
   systemctl restart "$SERVICE_NAME"
 }
 
-# 交互式主菜单
+main_menu() {
+  echo
+  echo "======= Socks 管理菜单 ======="
+  echo "1) 创建新的 Socks 出口"
+  echo "2) 查看所有配置"
+  echo "3) 删除某个配置"
+  echo "0) 退出"
+  echo "==============================="
+}
+
 main() {
   ensure_root
   check_danted
   install_dependencies
 
   while true; do
-    echo
-    echo "======= Socks 管理菜单 ======="
-    echo "1) 创建新的 Socks 出口"
-    echo "2) 查看所有配置"
-    echo "3) 删除某个配置"
-    echo "0) 退出"
-    echo "==============================="
-    read -rp "请输入选项: " choice
+    main_menu
+    read -rp "请选择 [0-3]: " choice
     case "$choice" in
-      1) create_socks ;; 2) list_socks ;; 3) delete_socks ;; 0) echo "退出"; exit 0 ;; * ) echo "❌ 无效选择" ;;
+      1) create_socks ;;
+      2) list_socks   ;;
+      3) delete_socks ;;
+      0) echo "退出脚本"; exit 0 ;;
+      *) echo "❌ 无效选项，请重新输入。" ;;
     esac
   done
 }
 
-main
+main "$@"
