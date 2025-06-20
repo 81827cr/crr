@@ -58,7 +58,7 @@ function install_and_config() {
   email="${email:-$DEFAULT_EMAIL}"
 
   # 2. 域名
-  read -rp "请输入你要反代的域名（如 git.example.com）: " domain
+  read -rp "请输入你反代的域名（如 git.example.com）: " domain
   [[ -z "$domain" ]] && { echo "未输入域名，已取消操作。"; exit 1; }
 
   # 3. 目标地址（IP/域名 或 完整 URL）
