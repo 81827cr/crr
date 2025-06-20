@@ -62,6 +62,18 @@ function security_check() {
   pause_and_back
 }
 
+function port_forward() {
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o ./port_forward.sh && \
+  bash ./port_forward.sh && rm -f ./port_forward.sh
+  pause_and_back
+}
+
+function setup_caddy() {
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && \
+  bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
+  pause_and_back
+}
+
 function set_dns() {
   echo -e "${BLUE}当前 DNS 配置：${NC}"
   grep '^nameserver' /etc/resolv.conf || echo "无 DNS 配置"
@@ -160,8 +172,10 @@ function show_menu() {
   echo -e "${YELLOW}[3] 设置虚拟内存 Swap${NC}"
   echo -e "${YELLOW}[4] 开启 BBR 加速${NC}"
   echo -e "${YELLOW}[5] 运行一键安全检查脚本${NC}"
-  echo -e "${YELLOW}[6] 修改 DNS 配置${NC}"
-  echo -e "${YELLOW}[7] 显示系统信息${NC}"
+  echo -e "${YELLOW}[6] 端口转发脚本${NC}"
+  echo -e "${YELLOW}[7] caddy反代脚本${NC}"
+  echo -e "${YELLOW}[8] 修改 DNS 配置${NC}"
+  echo -e "${YELLOW}[9] 显示系统信息${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
@@ -172,8 +186,10 @@ function show_menu() {
     3) set_swap ;;
     4) enable_bbr ;;
     5) security_check ;;
-    6) set_dns ;;
-    7) show_sysinfo ;;
+    6) port_forward ;;
+    7) setup_caddy ;;
+    8) set_dns ;;
+    9) show_sysinfo ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# 自动设置 alias（不会覆盖 .bashrc，不会重复添加）
+if ! grep -Fxq "alias p='$(realpath "$0")'" ~/.bashrc; then
+  echo "alias p='$(realpath "$0")'" >> ~/.bashrc
+  echo -e "\033[1;33m已自动添加 p 快捷命令，请重新打开终端或执行：source ~/.bashrc\033[0m"
+fi
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
