@@ -1,7 +1,7 @@
 ## Linux 管理面板脚本
 
 ```
-curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/panel.sh -o ./panel.sh && bash ./panel.sh
+curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/panel.sh -o ./panel.sh && chmod +x ./panel.sh && ./panel.sh
 ```
 
 
