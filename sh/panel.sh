@@ -57,7 +57,7 @@ function set_swap() {
 }
 
 function enable_bbr() {
-  curl -sSL https://raw.githubusercontent.com/chiakge/Linux-NetSpeed/master/tcp.sh -o ./tcp.sh && \
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o ./tcp.sh && \
   bash ./tcp.sh && rm -f ./tcp.sh
   pause_and_back
 }

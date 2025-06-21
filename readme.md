@@ -35,7 +35,13 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
 ```
 
-## 
+## 开启bbr
+
+```
+curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o ./tcp.sh && bash ./tcp.sh && rm -f ./tcp.sh
+```
+
+
 
 ## 禁用 PHP 高危函数列表
 
