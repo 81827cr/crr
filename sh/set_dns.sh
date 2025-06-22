@@ -57,23 +57,19 @@ set_dns_ui() {
     read -e -p "请输入你的选择: " Limiting
     case "$Limiting" in
       1)
-        local dns1_ipv4="1.1.1.1"
-        local dns2_ipv4="8.8.8.8"
-        local dns1_ipv6="2606:4700:4700::1111"
-        local dns2_ipv6="2001:4860:4860::8888"
+        # 设置国外 DNS 优化
+        new_dns="1.1.1.1 8.8.8.8"
         set_dns
         send_stats "国外DNS优化"
         ;;
       2)
-        local dns1_ipv4="223.5.5.5"
-        local dns2_ipv4="114.114.114.114"
-        local dns1_ipv6="2400:3200::1"
-        local dns2_ipv6="2400:da00::6666"
+        # 设置国内 DNS 优化
+        new_dns="223.5.5.5 114.114.114.114"
         set_dns
         send_stats "国内DNS优化"
         ;;
       3)
-        set_dns  # 这就是你原来的手动DNS设置功能
+        set_dns  # 手动编辑DNS配置
         send_stats "手动编辑DNS配置"
         ;;
       *)
