@@ -51,6 +51,13 @@ function set_timezone() {
 }
 
 
+function linux_clean() {
+  tmp_script="./linux_clean.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_clean.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
 function set_swap() {
   tmp_script="./set_swap.sh"
   curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o "$tmp_script" && bash "$tmp_script"
@@ -86,29 +93,13 @@ function setup_caddy() {
   pause_and_back
 }
 
-
 function set_dns() {
-  echo -e "${BLUE}当前 DNS 配置：${NC}"
-  grep '^nameserver' /etc/resolv.conf || echo "无 DNS 配置"
-
-  echo -ne "${YELLOW}请输入新的 DNS（支持多个，空格分隔，留空取消）：${NC}"
-  read new_dns
-
-  if [[ -z "$new_dns" ]]; then
-    echo -e "${GREEN}未输入，取消设置 DNS。${NC}"
-    pause_and_back
-    return
-  fi
-
-  echo -e "${GREEN}写入新的 DNS 配置：${new_dns}${NC}"
-  echo "" > /etc/resolv.conf
-  for ip in $new_dns; do
-    echo "nameserver $ip" >> /etc/resolv.conf
-  done
-
-  echo -e "${GREEN}DNS 已设置完成！${NC}"
+  tmp_script="./set_dns.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_dns.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
+
 
 function show_sysinfo() {
   CYAN='\033[1;36m'
@@ -180,29 +171,31 @@ function show_sysinfo() {
 function show_menu() {
   clear
   echo -e "${BLUE}========= Linux 管理控制面板 =========${NC}"
-  echo -e "${YELLOW}[1] 安装常用软件包（可选择排除）${NC}"
-  echo -e "${YELLOW}[2] 设置时区为 Asia/Shanghai${NC}"
-  echo -e "${YELLOW}[3] 设置虚拟内存 Swap${NC}"
-  echo -e "${YELLOW}[4] 开启 BBR 加速${NC}"
-  echo -e "${YELLOW}[5] 运行一键安全检查脚本${NC}"
-  echo -e "${YELLOW}[6] 端口转发脚本${NC}"
-  echo -e "${YELLOW}[7] caddy反代脚本${NC}"
-  echo -e "${YELLOW}[8] 修改 DNS 配置${NC}"
-  echo -e "${YELLOW}[9] 显示系统信息${NC}"
+  echo -e "${YELLOW}[1] 系统信息${NC}"
+  echo -e "${YELLOW}[2] 系统清理${NC}"
+  echo -e "${YELLOW}[3] 安装常用软件包（可选择排除）${NC}"
+  echo -e "${YELLOW}[4] 设置时区为 Asia/Shanghai${NC}"
+  echo -e "${YELLOW}[5] 设置虚拟内存 Swap${NC}"
+  echo -e "${YELLOW}[6] 开启 BBR 加速${NC}"
+  echo -e "${YELLOW}[7] 运行一键安全检查脚本${NC}"
+  echo -e "${YELLOW}[8] 端口转发脚本${NC}"
+  echo -e "${YELLOW}[9] caddy反代脚本${NC}"
+  echo -e "${YELLOW}[10] 修改 DNS 配置${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
 
   case $choice in
-    1) install_packages ;;
-    2) set_timezone ;;
-    3) set_swap ;;
-    4) enable_bbr ;;
-    5) security_check ;;
-    6) port_forward ;;
-    7) setup_caddy ;;
-    8) set_dns ;;
-    9) show_sysinfo ;;
+    1) show_sysinfo ;;
+    2) linux_clean ;;
+    3) install_packages ;;
+    4) set_timezone ;;
+    5) set_swap ;;
+    6) enable_bbr ;;
+    7) security_check ;;
+    8) port_forward ;;
+    9) setup_caddy ;;
+    10) set_dns ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac
