@@ -53,36 +53,36 @@ function set_timezone() {
 
 function set_swap() {
   tmp_script="./set_swap.sh"
-  trap 'rm -f "$tmp_script"' EXIT
   curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function enable_bbr() {
   tmp_script="./tcp.sh"
-  trap 'rm -f "$tmp_script"' EXIT
   curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function security_check() {
   tmp_script="./linux_security_check.sh"
-  trap 'rm -f "$tmp_script"' EXIT
   curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function port_forward() {
   tmp_script="./port_forward.sh"
-  trap 'rm -f "$tmp_script"' EXIT
   curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function setup_caddy() {
   tmp_script="./setup_caddy.sh"
-  trap 'rm -f "$tmp_script"' EXIT
   curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
