@@ -50,35 +50,42 @@ function set_timezone() {
   pause_and_back
 }
 
+
 function set_swap() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o ./set_swap.sh && \
-  bash ./set_swap.sh && rm -f ./set_swap.sh
+  tmp_script="./set_swap.sh"
+  trap 'rm -f "$tmp_script"' EXIT
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o "$tmp_script" && bash "$tmp_script"
   pause_and_back
 }
 
 function enable_bbr() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o ./tcp.sh && \
-  bash ./tcp.sh && rm -f ./tcp.sh
+  tmp_script="./tcp.sh"
+  trap 'rm -f "$tmp_script"' EXIT
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o "$tmp_script" && bash "$tmp_script"
   pause_and_back
 }
 
 function security_check() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o ./linux_security_check.sh && \
-  bash ./linux_security_check.sh && rm -f ./linux_security_check.sh
+  tmp_script="./linux_security_check.sh"
+  trap 'rm -f "$tmp_script"' EXIT
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o "$tmp_script" && bash "$tmp_script"
   pause_and_back
 }
 
 function port_forward() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o ./port_forward.sh && \
-  bash ./port_forward.sh && rm -f ./port_forward.sh
+  tmp_script="./port_forward.sh"
+  trap 'rm -f "$tmp_script"' EXIT
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o "$tmp_script" && bash "$tmp_script"
   pause_and_back
 }
 
 function setup_caddy() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && \
-  bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
+  tmp_script="./setup_caddy.sh"
+  trap 'rm -f "$tmp_script"' EXIT
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o "$tmp_script" && bash "$tmp_script"
   pause_and_back
 }
+
 
 function set_dns() {
   echo -e "${BLUE}当前 DNS 配置：${NC}"
