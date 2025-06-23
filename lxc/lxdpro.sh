@@ -2261,7 +2261,7 @@ read -p "请输入账号id: " tg_id
 echo "tg搜索@BotFather 输入/newbot 创建机器人获取token"
 read -p "请输入机器人token API: " tg_bot_token
 mkdir "/usr/lxdpro"
-wget https://raw.githubusercontent.com/MXCCO/lxdpro/main/lxdtgbot.py -O /usr/lxdpro/lxdtgbot.py && chmod +x /usr/lxdpro/lxdtgbot.py
+wget https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/lxc/lxdtgbot.py -O /usr/lxdpro/lxdtgbot.py && chmod +x /usr/lxdpro/lxdtgbot.py
 cat << EOF > /etc/systemd/system/lxdbot.service
 
 [Unit]
@@ -2337,7 +2337,7 @@ case $choice in
     ;;
     8)  admin_cat8
     ;;
-    9)  wget -N --no-check-certificate https://raw.githubusercontent.com/MXCCO/lxdpro/main/lxdpro.sh
+    9)  wget -N --no-check-certificate https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/lxc/lxdpro.sh
         chmod +x lxdpro.sh
         echo "更新完成3秒后执行新脚本"
         sleep 3s
