@@ -41,8 +41,9 @@ check_status() {
     current_cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo "")
     bbr_loaded=$(lsmod | grep -w "tcp_bbr" || true)
 
-    # 检查是否支持 BBR
-    if [[ "$available_cc" == *bbr* ]]; then
+    # 检查内核是否支持 BBR
+    # 通过检查内核版本号来确认是否支持 BBR
+    if [[ "$available_cc" == *bbr* || "$kernel" =~ "5" || "$kernel" =~ "4" ]]; then
         kernel_status="BBR支持内核已安装"
     else
         kernel_status="未安装BBR支持内核"
