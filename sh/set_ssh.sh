@@ -10,7 +10,7 @@ if [ ! -f ~/.ssh/id_rsa ]; then
   echo -e "\033[1;34m[1/6] 正在生成 SSH 密钥对...\033[0m"
   mkdir -p ~/.ssh
   chmod 700 ~/.ssh
-  ssh-keygen -t rsa -b 2048 -N "" -f ~/.ssh/id_rsa
+  ssh-keygen -t rsa -b 4096 -N "" -f ~/.ssh/id_rsa
 else
   echo -e "\033[1;33m已存在 SSH 密钥对，跳过生成...\033[0m"
 fi
