@@ -50,6 +50,12 @@ function set_timezone() {
   pause_and_back
 }
 
+function set_ssh() {
+  tmp_script="./set_ssh.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_ssh.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
 
 function linux_clean() {
   tmp_script="./linux_clean.sh"
@@ -66,8 +72,8 @@ function set_swap() {
 }
 
 function enable_bbr() {
-  tmp_script="./tcp.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o "$tmp_script" && bash "$tmp_script"
+  tmp_script="./enable_bbr.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/enable_bbr.sh -o "$tmp_script" && bash "$tmp_script"
   rm -f "$tmp_script"
   pause_and_back
 }
@@ -175,12 +181,13 @@ function show_menu() {
   echo -e "${YELLOW}[2] 系统清理${NC}"
   echo -e "${YELLOW}[3] 安装常用软件包（可选择排除）${NC}"
   echo -e "${YELLOW}[4] 设置时区为 Asia/Shanghai${NC}"
-  echo -e "${YELLOW}[5] 设置虚拟内存 Swap${NC}"
-  echo -e "${YELLOW}[6] 开启 BBR 加速${NC}"
-  echo -e "${YELLOW}[7] 运行一键安全检查脚本${NC}"
-  echo -e "${YELLOW}[8] 端口转发脚本${NC}"
-  echo -e "${YELLOW}[9] caddy反代脚本${NC}"
-  echo -e "${YELLOW}[10] 修改 DNS 配置${NC}"
+  echo -e "${YELLOW}[5] 开启ssh密钥登录${NC}"
+  echo -e "${YELLOW}[6] 设置虚拟内存 Swap${NC}"
+  echo -e "${YELLOW}[7] 开启 BBR 加速${NC}"
+  echo -e "${YELLOW}[8] 运行一键安全检查脚本${NC}"
+  echo -e "${YELLOW}[9] 端口转发脚本${NC}"
+  echo -e "${YELLOW}[10] caddy反代脚本${NC}"
+  echo -e "${YELLOW}[11] 修改 DNS 配置${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
@@ -190,12 +197,13 @@ function show_menu() {
     2) linux_clean ;;
     3) install_packages ;;
     4) set_timezone ;;
-    5) set_swap ;;
-    6) enable_bbr ;;
-    7) security_check ;;
-    8) port_forward ;;
-    9) setup_caddy ;;
-    10) set_dns ;;
+    5) set_ssh ;;
+    6) set_swap ;;
+    7) enable_bbr ;;
+    8) security_check ;;
+    9) port_forward ;;
+    10) setup_caddy ;;
+    11) set_dns ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac
