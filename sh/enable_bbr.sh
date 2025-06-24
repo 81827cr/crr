@@ -41,12 +41,14 @@ check_status() {
     current_cc=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || echo "")
     bbr_loaded=$(lsmod | grep -w "tcp_bbr" || true)
 
+    # 检查是否支持 BBR
     if [[ "$available_cc" == *bbr* ]]; then
         kernel_status="BBR支持内核已安装"
     else
         kernel_status="未安装BBR支持内核"
     fi
 
+    # 检查 BBR 是否启用
     if [[ "$current_cc" == "bbr" && -n "$bbr_loaded" ]]; then
         bbr_enabled="BBR启动成功"
     elif [[ "$current_cc" == "bbr" ]]; then
@@ -55,6 +57,7 @@ check_status() {
         bbr_enabled="BBR未启用"
     fi
 }
+
 
 install_bbr_kernel() {
     detect_sys
