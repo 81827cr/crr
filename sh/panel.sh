@@ -106,6 +106,12 @@ function set_dns() {
   pause_and_back
 }
 
+function backup() {
+  tmp_script="./backup.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/backup.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
 
 function show_sysinfo() {
   CYAN='\033[1;36m'
@@ -188,6 +194,7 @@ function show_menu() {
   echo -e "${YELLOW}[9] 端口转发脚本${NC}"
   echo -e "${YELLOW}[10] caddy反代脚本${NC}"
   echo -e "${YELLOW}[11] 修改 DNS 配置${NC}"
+  echo -e "${YELLOW}[12] 备份vps${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
@@ -204,6 +211,7 @@ function show_menu() {
     9) port_forward ;;
     10) setup_caddy ;;
     11) set_dns ;;
+    12) backup ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac
