@@ -164,8 +164,29 @@ def main():
         account = ACCKAccount(acc["email"], acc["password"], acc["totp_secret"])
         try:
             account.login()
-            account.checkin()
-            account.get_balance()
+            account.checkin()  # 签到（不管结果，余额都查询）
+            
+            # 查询余额并发送 Telegram 通知（无论签到是否成功）
+            headers = {"Authorization": account.token}
+            resp = account.session.get("https://api.acck.io/api/v1/user/index", headers=headers, timeout=20)
+            data = resp.json()
+            
+            if data.get("status_code") != 0:
+                msg = f"[{acc['email']}] 获取余额失败: {data.get('status_msg', '未知错误')}"
+                print(f"{Color.RED}❌ {msg}{Color.END}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, msg)
+            else:
+                info = data.get("data", {})
+                money = info.get("money", 0)
+                try:
+                    money = float(money) / 100
+                except Exception:
+                    money = 0.0
+                ak_coin = info.get("ak_coin", "N/A")
+                balance_msg = f"[{acc['email']}] 余额信息 - AK币: {ak_coin}，现金: ¥{money:.2f}"
+                print(f"{Color.BLUE}💰 {balance_msg}{Color.END}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, balance_msg)
+
         except Exception as e:
             err_msg = f"[{acc['email']}] 脚本异常: {str(e)}"
             print(f"{Color.RED}❌ {err_msg}{Color.END}")
