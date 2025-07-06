@@ -96,12 +96,16 @@ class ACCKAccount:
             raise
 
         if data.get("code") == 200:
-            print(f"{Color.GREEN}✅ 签到成功: {data.get('msg', '')}{Color.END}")
+            msg = f"[{self.email}] ✅ 签到成功: {data.get('msg', '')}"
+            print(f"{Color.GREEN}{msg}{Color.END}")
+            send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, msg)
         elif data.get("msg") == "今日已签到":
-            print(f"{Color.GREEN}ℹ️ 签到状态：今日已签到{Color.END}")
+            msg = f"[{self.email}] ℹ️ 今日已签到"
+            print(f"{Color.GREEN}{msg}{Color.END}")
+            send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, msg)
         else:
-            err_msg = f"[{self.email}] 签到失败: {data}"
-            print(f"{Color.RED}❌ {err_msg}{Color.END}")
+            err_msg = f"[{self.email}] ❌ 签到失败: {data}"
+            print(f"{Color.RED}{err_msg}{Color.END}")
             send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, err_msg)
 
     def get_balance(self):
