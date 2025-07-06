@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 """
-Akile 多账户签到脚本 (多账户单环境变量版)
+Akile 多账户签到脚本 (多账户单环境变量版，支持 Telegram 通知)
 
 ★ 主要改进 ★
-1. 支持在单个环境变量中配置多个账户
-2. 使用统一格式：email:password:totp_secret(可选)|email:password...
-3. 自动解析多账户配置
-export AKILE_ACCOUNTS="邮箱1:密码1:TOTP密钥1|邮箱2:密码2|邮箱3:密码3:TOTP密钥3"
-示例
-# 三个账户示例（第二个账户不需要TOTP）
-export AKILE_ACCOUNTS="user1@example.com:password1:JBSWY3DPEHPK3PXP|user2@example.com:password2|user3@example.com:password3:JBSWY3DPEHPK3PXQ"
+1. 支持 Telegram 通知（成功、失败、异常）
+2. 环境变量统一管理，使用 AKILE_ACCOUNTS、TG_BOT_TOKEN、TG_CHAT_ID
 """
 
 import os
@@ -18,9 +13,14 @@ import pyotp
 from curl_cffi import requests
 from dotenv import load_dotenv
 from typing import Dict, List, Optional, Tuple
+import sys
 
 # 初始化环境变量
 load_dotenv()
+
+# 读取 Telegram 配置
+TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", "")
+TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
 
 class Color:
     """控制台颜色"""
@@ -30,6 +30,20 @@ class Color:
     BLUE = '\033[94m'
     CYAN = '\033[96m'
     END = '\033[0m'
+
+def send_telegram_message(token: str, chat_id: str, text: str):
+    if not token or not chat_id:
+        print(f"{Color.YELLOW}⚠️ Telegram配置未填写，跳过通知{Color.END}")
+        return
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    try:
+        resp = requests.post(url, json={"chat_id": chat_id, "text": text})
+        if resp.status_code == 200:
+            print(f"{Color.GREEN}✅ Telegram通知发送成功{Color.END}")
+        else:
+            print(f"{Color.RED}❌ Telegram通知发送失败: {resp.text}{Color.END}")
+    except Exception as e:
+        print(f"{Color.RED}❌ 发送Telegram通知异常: {e}{Color.END}")
 
 class AkileSession:
     """独立会话环境"""
@@ -218,32 +232,39 @@ class AccountManager:
             token, error = account.login()
             if error:
                 print(f"{Color.RED}❌ 登录失败: {error}{Color.END}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, f"[{acc['email']}] 登录失败: {error}")
                 continue
                 
             print(f"{Color.GREEN}✅ 登录成功{Color.END}")
+            send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, f"[{acc['email']}] 登录成功")
             
             # 签到
             success, msg = account.checkin(token)
             if success:
                 print(f"{Color.GREEN}✅ {msg}{Color.END}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, f"[{acc['email']}] 签到成功: {msg}")
             else:
                 print(f"{Color.RED}❌ 签到失败: {msg}{Color.END}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, f"[{acc['email']}] 签到失败: {msg}")
             
             # 获取并显示真实余额
             balance = account.get_real_balance(token)
             if "error" in balance:
                 print(f"{Color.RED}❌ {balance['error']}{Color.END}")
                 print(f"{Color.YELLOW}⚠️ 原始响应: {balance.get('raw_data', '无')}{Color.END}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, f"[{acc['email']}] 余额获取失败: {balance['error']}")
             else:
                 print(f"{Color.BLUE}💰 真实账户余额:")
                 print(f"   AK币: {balance['ak_coin']}")
                 print(f"   现金: ¥{balance['money']}")
+                send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID,
+                                      f"[{acc['email']}] 余额信息 - AK币: {balance['ak_coin']}，现金: ¥{balance['money']}")
             
             time.sleep(1)
 
 if __name__ == "__main__":
     try:
-        print(f"\n{Color.BLUE}★ Akile多账户签到脚本 ★{Color.END}")
+        print(f"\n{Color.BLUE}★ Akile多账户签到脚本（支持Telegram通知） ★{Color.END}")
         print(f"{Color.YELLOW}⚠️ 使用AKILE_ACCOUNTS环境变量配置多个账户{Color.END}")
         print(f"{Color.YELLOW}⚠️ 格式: 邮箱:密码:TOTP密钥|邮箱:密码|...{Color.END}")
         
