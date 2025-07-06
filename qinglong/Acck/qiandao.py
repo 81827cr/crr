@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ACCK 多账户签到脚本（带 TG BOT 通知，Token 和 ChatID 写死脚本内）
+ACCK 多账户签到脚本（适配青龙，支持 TG 通知）
 """
 
 import requests
@@ -9,9 +9,9 @@ import time
 import sys
 import os
 
-# === Telegram 配置（写死在这里）===
-TG_BOT_TOKEN = "电报BOT秘钥"
-TG_CHAT_ID = "通知对话ID"
+# === Telegram 配置（从环境变量读取）===
+TG_BOT_TOKEN = os.getenv("TG_BOT_TOKEN", "")
+TG_CHAT_ID = os.getenv("TG_CHAT_ID", "")
 
 class Color:
     GREEN = '\033[92m'
@@ -104,7 +104,6 @@ class ACCKAccount:
             print(f"{Color.RED}❌ {err_msg}{Color.END}")
             send_telegram_message(TG_BOT_TOKEN, TG_CHAT_ID, err_msg)
 
-
     def get_balance(self):
         if not self.token:
             return None
@@ -146,9 +145,9 @@ def parse_accounts(env_var: str):
     return accounts
 
 def main():
-    print(f"{Color.BLUE}★ ACCK 多账户签到脚本（Telegram通知写死版） ★{Color.END}")
-    print(f"{Color.YELLOW}⚠️ 请设置环境变量 ACCK_ACCOUNTS{Color.END}")
-    print(f"{Color.YELLOW}格式示例: email1:password1:totp1|email2:password2|email3:password3:totp3{Color.END}")
+    print(f"{Color.BLUE}★ ACCK 多账户签到脚本（适配青龙） ★{Color.END}")
+    print(f"{Color.YELLOW}⚠️ 请设置环境变量 ACCK_ACCOUNTS、TG_BOT_TOKEN、TG_CHAT_ID{Color.END}")
+    print(f"{Color.YELLOW}格式示例: email1:password1:totp1|email2:password2{Color.END}")
 
     env_accounts = os.getenv("ACCK_ACCOUNTS", "")
     accounts = parse_accounts(env_accounts)
