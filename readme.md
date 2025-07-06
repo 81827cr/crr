@@ -41,6 +41,14 @@ curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup
 curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o ./tcp.sh && bash ./tcp.sh && rm -f ./tcp.sh
 ```
 
+## vps备份
+
+需要自行添加rclone的网盘配置, 命令为pikpak或者onedrive
+
+```
+curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/backup.sh -o ./backup.sh && bash ./backup.sh && rm -f ./backup.sh
+```
+
 
 
 ## 禁用 PHP 高危函数列表
