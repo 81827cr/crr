@@ -23,6 +23,8 @@ echo "请选择一个 rclone 配置："
 REMOTE_LIST=($(rclone listremotes))
 select REMOTE in "${REMOTE_LIST[@]}"; do
   if [[ -n "$REMOTE" ]]; then
+    # 去除末尾冒号，防止拼接为 ::
+    REMOTE="${REMOTE%:}"
     echo "已选择远端配置：$REMOTE"
     break
   else
