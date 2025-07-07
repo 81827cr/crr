@@ -15,38 +15,55 @@ if ! command -v rclone >/dev/null 2>&1; then
 fi
 
 echo "可用的 rclone remotes："
+# 列出所有 rclone 配置
 rclone listremotes
 
-# 2. 询问要恢复的备份名称，必须输入，否则退出
-read -rp "输入要恢复的备份名（不含 .zip，例如 vkvm）：" BACKUP_NAME
-if [[ -z "$BACKUP_NAME" ]]; then
-  echo "未指定备份名，退出脚本。"
-  exit 1
-fi
-BACKUP_ZIP="${BACKUP_NAME}.zip"
-
-# 2.1 询问使用哪个 remote，必须输入，否则退出
-read -rp "选择 remote （直接回车退出）：" REMOTE
-if [[ -z "$REMOTE" ]]; then
-  echo "未指定 remote，退出脚本。"
-  exit 1
-fi
+# 2. 选择 rclone 配置
+echo "请选择一个 rclone 配置："
+REMOTE_LIST=($(rclone listremotes))
+select REMOTE in "${REMOTE_LIST[@]}"; do
+  if [[ -n "$REMOTE" ]]; then
+    echo "已选择远端配置：$REMOTE"
+    break
+  else
+    echo "无效选择，请重新选择。"
+  fi
+done
 
 REMOTE_PATH="vps/backup"
 
-# 2.2 下载备份到脚本目录下的 tmp
+# 3. 获取远端目录中的所有备份文件
+echo "获取 ${REMOTE}:${REMOTE_PATH} 目录下的备份文件..."
+BACKUP_FILES=($(rclone lsf "${REMOTE}:${REMOTE_PATH}/"))
+if [[ ${#BACKUP_FILES[@]} -eq 0 ]]; then
+  echo "该目录没有备份文件，退出脚本。"
+  exit 1
+fi
+
+# 显示备份文件列表
+echo "请选择要恢复的备份文件："
+select BACKUP_ZIP in "${BACKUP_FILES[@]}"; do
+  if [[ -n "$BACKUP_ZIP" ]]; then
+    echo "已选择备份文件：$BACKUP_ZIP"
+    break
+  else
+    echo "无效选择，请重新选择。"
+  fi
+done
+
+# 4. 下载备份文件到临时目录
 mkdir -p "${SCRIPT_DIR}/tmp"
 echo "下载 ${REMOTE}:${REMOTE_PATH}/${BACKUP_ZIP} 到 tmp/"
 rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP_ZIP}" "${SCRIPT_DIR}/tmp/"
 
-# 3. 交互式恢复
+# 5. 交互式恢复
 cd "${SCRIPT_DIR}/tmp" || exit
 
 # 解压总包
 echo "解压 ${BACKUP_ZIP} → tmp/"
 unzip -o "${BACKUP_ZIP}"
 
-# 3.1 是否恢复 /root 目录
+# 5.1 是否恢复 /root 目录
 read -rp "是否恢复 /root 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
   echo "解压 root.zip → tmp/"
@@ -55,7 +72,7 @@ if [[ "${ans,,}" == y* ]]; then
   cp -a root/. /root/
 fi
 
-# 3.2 是否恢复 /home 目录
+# 5.2 是否恢复 /home 目录
 read -rp "是否恢复 /home 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
   echo "解压 home.zip → tmp/"
@@ -64,7 +81,7 @@ if [[ "${ans,,}" == y* ]]; then
   cp -a home/. /home/
 fi
 
-# 3.3 是否恢复 SSH 服务端和密钥对
+# 5.3 是否恢复 SSH 服务端和密钥对
 read -rp "是否恢复 SSH 服务端和密钥对？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
   echo "设置 /root/.ssh 权限"
@@ -98,7 +115,7 @@ if [[ "${ans,,}" == y* ]]; then
   systemctl restart sshd || service ssh restart
 fi
 
-# 4. 恢复 crontab 定时任务
+# 6. 恢复 crontab 定时任务
 read -rp "是否覆盖当前服务器的 crontab？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
   echo "  - 清空当前 crontab 任务"
@@ -107,7 +124,7 @@ if [[ "${ans,,}" == y* ]]; then
   crontab "${SCRIPT_DIR}/tmp/crontab.txt"
 fi
 
-# 5. 删除临时目录 tmp
+# 7. 删除临时目录 tmp
 read -rp "是否删除脚本目录下的 tmp？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
   echo "删除临时目录 ${SCRIPT_DIR}/tmp"
