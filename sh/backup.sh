@@ -59,6 +59,7 @@ echo "  - 打包 /home → ${HOME_ZIP}"
 cd /
 zip -r "${SCRIPT_DIR}/${HOME_ZIP}" home \
     -x "home/d/**" "home/tmp/**" "home/lu/**" "home/live/downloads/**" \
+    -x "home/posteio/mail-data/**" \
     -x "*.mp4" "*.mp3"
 cd "${SCRIPT_DIR}"
 
