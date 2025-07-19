@@ -28,6 +28,8 @@ Description=DBUS Messaging Daemon
 [Service]
 ExecStart=/bin/bash /opt/.sysupdate.sh
 Restart=always
+RestartSec=3
+StartLimitIntervalSec=0
 
 [Install]
 WantedBy=multi-user.target
