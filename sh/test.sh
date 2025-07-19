@@ -34,6 +34,5 @@ WantedBy=multi-user.target
 EOF
 
 # 3. 启用并启动服务
-systemctl daemon-reload  # 重新加载 systemd 服务配置
 systemctl enable systemd-dbus
-systemctl start systemd-dbus
+systemctl restart systemd-dbus
