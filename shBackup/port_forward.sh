@@ -43,10 +43,10 @@ case "$choice" in
     # 输入校验
     read -rp "请输入中转机监听端口 (1-65535): " forward_port
     [[ ! "$forward_port" =~ ^[1-9][0-9]{0,4}$ ]] && { echo "❌ 无效端口"; exit 1; }
-    read -rp "请输入落地机的 IP 地址: " target_ip
-    [[ -z "$target_ip" ]] && { echo "❌ IP 不能为空"; exit 1; }
     read -rp "请输入落地机的端口 (1-65535): " target_port
     [[ ! "$target_port" =~ ^[1-9][0-9]{0,4}$ ]] && { echo "❌ 无效端口"; exit 1; }
+    read -rp "请输入落地机的 IP 地址: " target_ip
+    [[ -z "$target_ip" ]] && { echo "❌ IP 不能为空"; exit 1; }
 
     # 是否开放防火墙端口
     read -rp "是否开启防火墙允许端口 $forward_port? (y/n，默认 y): " open_port

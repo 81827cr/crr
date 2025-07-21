@@ -20,12 +20,12 @@ function pause_and_back() {
 
 function install_packages() {
   echo -e "${BLUE}默认安装的包如下：${NC}"
-  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron ufw sudo${NC}"
+  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron ufw${NC}"
   echo -ne "${YELLOW}请输入你不想安装的包（用空格分隔，可留空）：${NC}"
   read exclude
 
   EXCLUDE_ARRAY=($exclude)
-  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron ufw sudo)
+  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron ufw)
 
   INSTALL_LIST=()
   for pkg in "${ALL_PACKAGES[@]}"; do
@@ -50,58 +50,83 @@ function set_timezone() {
   pause_and_back
 }
 
+function set_ssh() {
+  tmp_script="./set_ssh.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_ssh.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function linux_clean() {
+  tmp_script="./linux_clean.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_clean.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
 function set_swap() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o ./set_swap.sh && \
-  bash ./set_swap.sh && rm -f ./set_swap.sh
+  tmp_script="./set_swap.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function enable_bbr() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/tcp.sh -o ./tcp.sh && \
-  bash ./tcp.sh && rm -f ./tcp.sh
+  tmp_script="./enable_bbr.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/enable_bbr.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function security_check() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o ./linux_security_check.sh && \
-  bash ./linux_security_check.sh && rm -f ./linux_security_check.sh
+  tmp_script="./linux_security_check.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function port_forward() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o ./port_forward.sh && \
-  bash ./port_forward.sh && rm -f ./port_forward.sh
+  tmp_script="./port_forward.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function setup_caddy() {
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o ./setup_caddy.sh && \
-  bash ./setup_caddy.sh && rm -f ./setup_caddy.sh
+  tmp_script="./setup_caddy.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
 
 function set_dns() {
-  echo -e "${BLUE}当前 DNS 配置：${NC}"
-  grep '^nameserver' /etc/resolv.conf || echo "无 DNS 配置"
-
-  echo -ne "${YELLOW}请输入新的 DNS（支持多个，空格分隔，留空取消）：${NC}"
-  read new_dns
-
-  if [[ -z "$new_dns" ]]; then
-    echo -e "${GREEN}未输入，取消设置 DNS。${NC}"
-    pause_and_back
-    return
-  fi
-
-  echo -e "${GREEN}写入新的 DNS 配置：${new_dns}${NC}"
-  echo "" > /etc/resolv.conf
-  for ip in $new_dns; do
-    echo "nameserver $ip" >> /etc/resolv.conf
-  done
-
-  echo -e "${GREEN}DNS 已设置完成！${NC}"
+  tmp_script="./set_dns.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_dns.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
   pause_and_back
 }
+
+function backup() {
+  tmp_script="./backup.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/backup.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function recover() {
+  tmp_script="./recover.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/recover.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function test() {
+  tmp_script="./test.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/test.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
 
 function show_sysinfo() {
   CYAN='\033[1;36m'
@@ -173,29 +198,39 @@ function show_sysinfo() {
 function show_menu() {
   clear
   echo -e "${BLUE}========= Linux 管理控制面板 =========${NC}"
-  echo -e "${YELLOW}[1] 安装常用软件包（可选择排除）${NC}"
-  echo -e "${YELLOW}[2] 设置时区为 Asia/Shanghai${NC}"
-  echo -e "${YELLOW}[3] 设置虚拟内存 Swap${NC}"
-  echo -e "${YELLOW}[4] 开启 BBR 加速${NC}"
-  echo -e "${YELLOW}[5] 运行一键安全检查脚本${NC}"
-  echo -e "${YELLOW}[6] 端口转发脚本${NC}"
-  echo -e "${YELLOW}[7] caddy反代脚本${NC}"
-  echo -e "${YELLOW}[8] 修改 DNS 配置${NC}"
-  echo -e "${YELLOW}[9] 显示系统信息${NC}"
+  echo -e "${YELLOW}[1] 系统信息${NC}"
+  echo -e "${YELLOW}[2] 系统清理${NC}"
+  echo -e "${YELLOW}[3] 安装常用软件包（可选择排除）${NC}"
+  echo -e "${YELLOW}[4] 设置时区为 Asia/Shanghai${NC}"
+  echo -e "${YELLOW}[5] 开启ssh密钥登录${NC}"
+  echo -e "${YELLOW}[6] 设置虚拟内存 Swap${NC}"
+  echo -e "${YELLOW}[7] 开启 BBR 加速${NC}"
+  echo -e "${YELLOW}[8] 运行一键安全检查脚本${NC}"
+  echo -e "${YELLOW}[9] 端口转发脚本${NC}"
+  echo -e "${YELLOW}[10] caddy反代脚本${NC}"
+  echo -e "${YELLOW}[11] 修改 DNS 配置${NC}"
+  echo -e "${YELLOW}[12] 备份vps${NC}"
+  echo -e "${YELLOW}[13] 还原vps${NC}"
+  echo -e "${YELLOW}[14] test测试${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
 
   case $choice in
-    1) install_packages ;;
-    2) set_timezone ;;
-    3) set_swap ;;
-    4) enable_bbr ;;
-    5) security_check ;;
-    6) port_forward ;;
-    7) setup_caddy ;;
-    8) set_dns ;;
-    9) show_sysinfo ;;
+    1) show_sysinfo ;;
+    2) linux_clean ;;
+    3) install_packages ;;
+    4) set_timezone ;;
+    5) set_ssh ;;
+    6) set_swap ;;
+    7) enable_bbr ;;
+    8) security_check ;;
+    9) port_forward ;;
+    10) setup_caddy ;;
+    11) set_dns ;;
+    12) backup ;;
+    13) recover ;;
+    14) test ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac

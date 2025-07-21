@@ -53,49 +53,63 @@ function check_and_install_caddy() {
 function install_and_config() {
   check_and_install_caddy
 
+  # 1. 邮箱
   read -rp "请输入你的邮箱（默认: $DEFAULT_EMAIL）: " email
   email="${email:-$DEFAULT_EMAIL}"
 
-  read -rp "请输入你要反代的域名（如 git.example.com）: " domain
-  if [[ -z "$domain" ]]; then
-    echo "未输入域名，已取消操作。"
-    exit 1
-  fi
+  # 2. 域名
+  read -rp "请输入你反代的域名（如 git.example.com）: " domain
+  [[ -z "$domain" ]] && { echo "未输入域名，已取消操作。"; exit 1; }
 
-  read -rp "请输入本地反代端口（如 3000）: " port
-  if [[ -z "$port" ]]; then
-    echo "未输入端口，已取消操作。"
-    exit 1
+  # 3. 目标地址（IP/域名 或 完整 URL）
+  read -rp "请输入要反代的落地机 IP 或域名/URL（默认: 127.0.0.1）: " target
+  target="${target:-127.0.0.1}"
+
+  # 4. 如果没带协议，再询问端口并决定 scheme
+  if [[ "$target" =~ ^https?:// ]]; then
+    upstream="$target"
+  else
+    read -rp "请输入落地机的端口（如 80/443/3000）: " port
+    [[ -z "$port" ]] && { echo "未输入端口，已取消操作。"; exit 1; }
+
+    # 443 默认 https，其它默认 http
+    if [[ "$port" -eq 443 ]]; then
+      scheme="https"
+    else
+      scheme="http"
+    fi
+    upstream="${scheme}://${target}:${port}"
   fi
 
   echo ">>> 写入配置到 $CADDY_FILE..."
 
-  # 如果 Caddyfile 不存在，创建新文件并写入注释
+  # 初始化 Caddyfile
   if [[ ! -f "$CADDY_FILE" ]]; then
     echo "# Caddy 配置文件自动创建于 $(date)" > "$CADDY_FILE"
   fi
 
-  # 追加配置段
+  # 追加反代配置
   {
     echo ""
     echo "$domain {"
     echo "    tls $email"
     echo "    encode gzip"
-    echo "    reverse_proxy localhost:$port"
+    echo "    reverse_proxy $upstream"
     echo "}"
   } >> "$CADDY_FILE"
 
+  # 重启并启用 Caddy
   echo ">>> 重启 Caddy 并设置开机自启..."
   systemctl daemon-reexec
   if ! systemctl restart caddy; then
-    echo "❌ Caddy 启动失败，请使用以下命令查看详情："
-    echo "   journalctl -u caddy.service --no-pager | tail -n 30"
+    echo "❌ Caddy 启动失败，请查看：journalctl -u caddy.service -n 30"
     exit 1
   fi
   systemctl enable caddy
 
-  echo ">>> 配置成功！请确保 $domain 的 DNS 已指向当前服务器 IP。"
+  echo "✅ 配置成功！请确保 $domain 的 DNS 已正确解析到当前服务器 IP。"
 }
+
 
 # 查看完整配置文件
 function view_full_config() {
