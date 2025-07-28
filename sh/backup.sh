@@ -2,40 +2,29 @@
 set -euo pipefail
 
 ### === 配置区 === ###
-# 最大保留备份数量（每个机器名前缀）
-MAX_BACKUPS=2
-
-# rclone 目标目录（路径尾部不要加斜杠）
-PIKPAK_REMOTE="pikpak:vps/backup"
+MAX_BACKUPS=2                                 # 每个前缀保留的备份数量
+PIKPAK_REMOTE="pikpak:vps/backup"             # Rclone 目标路径（不带末尾斜杠）
 ONEDRIVE_REMOTE="onedrive:vps/backup"
 S3_REMOTE="bing:dps666/vps/backup"
 
-# 排除与包含模式 — 请根据需求编辑
-# /root 目录：排除所有隐藏文件与媒体文件，但保留 .config 与 .ssh
+# 排除和包含模式 — 请根据需求调整
 ROOT_EXCLUDES=(
-  --exclude='root/.*'
-  --exclude='*.mp4'
-  --exclude='*.mp3'
+  --exclude='root/.*'       # 排除 /root 下所有隐藏目录（.config、.ssh 除外）
+  --exclude='*.mp4'         # 排除所有 .mp4 文件
+  --exclude='*.mp3'         # 排除所有 .mp3 文件
 )
-ROOT_INCLUDES=(
-  --include='root/.config/**'
-  --include='root/.ssh/**'
-)
-
-# /home 目录：排除指定目录与媒体文件
+# 注意 GNU tar 不提供独立的 --include 选项，这里通过先指定 .config/.ssh 再 exclude 其余隐藏
 HOME_EXCLUDES=(
-  --exclude='home/d/**'
-  --exclude='home/tmp/**'
-  --exclude='home/lu/**'
-  --exclude='home/live/downloads/**'
-  --exclude='*.mp4'
-  --exclude='*.mp3'
+  --exclude='home/d/**'                # 排除 /home/d 目录及子目录
+  --exclude='home/tmp/**'              # 排除 /home/tmp 目录及子目录
+  --exclude='home/lu/**'               # 排除 /home/lu 目录及子目录
+  --exclude='home/live/downloads/**'   # 排除 /home/live/downloads 目录及子目录
+  --exclude='*.mp4'                    # 排除 .mp4 文件
+  --exclude='*.mp3'                    # 排除 .mp3 文件
 )
-# 如需强制保留某些内容，可在此添加 --include 模式
-HOME_INCLUDES=()
 ### =============== ###
 
-# 参数获取：备份前缀
+# 获取备份前缀参数（如 dc02）
 if [[ $# -ge 1 ]]; then
   BACKUP_PREFIX="$1"
 else
@@ -43,74 +32,68 @@ else
   [[ -z "${BACKUP_PREFIX}" ]] && echo "错误：备份名称不能为空！" && exit 1
 fi
 
-NOW=$(date +"%Y%m%d%H%M")
+NOW=$(date "+%Y%m%d%H%M")
 FINAL_TAR="${BACKUP_PREFIX}-${NOW}.tar.gz"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# 中间文件
-ROOT_TAR="root.tar.gz"
-HOME_TAR="home.tar.gz"
-CRONTAB_FILE="crontab.txt"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}"
 
 echo "[$(date '+%F %T')] 开始备份：${FINAL_TAR}"
-rm -f "${ROOT_TAR}" "${HOME_TAR}" "${CRONTAB_FILE}"
 
-# 1. 打包 /root
-echo "  - 打包 /root → ${ROOT_TAR}"
+# 清理旧的中间文件
+rm -f root.tar.gz home.tar.gz crontab.txt
+
+# —— 1. 打包 /root ——
+echo "  - 打包 /root → root.tar.gz"
 cd /
-tar -zcvf "${SCRIPT_DIR}/${ROOT_TAR}" \
-  "${ROOT_EXCLUDES[@]}" \
-  "${ROOT_INCLUDES[@]}" \
-  -C / root || echo "  ! /root 打包过程中有文件变动，已继续"
+tar czf "${SCRIPT_DIR}/root.tar.gz" root/.config root/.ssh "${ROOT_EXCLUDES[@]}" root
+
+# —— 2. 导出 crontab ——
+echo "  - 导出 crontab → crontab.txt"
+crontab -l > "${SCRIPT_DIR}/crontab.txt" || true
+
+# —— 3. 打包 /home ——
+echo "  - 打包 /home → home.tar.gz"
+cd /
+tar czf "${SCRIPT_DIR}/home.tar.gz" "${HOME_EXCLUDES[@]}" home
+
+# 返回脚本目录
 cd "${SCRIPT_DIR}"
 
-# 2. 导出 crontab
-echo "  - 导出 crontab → ${CRONTAB_FILE}"
-crontab -l > "${CRONTAB_FILE}" || true
-
-# 3. 打包 /home
-echo "  - 打包 /home → ${HOME_TAR}"
-cd /
-tar -zcvf "${SCRIPT_DIR}/${HOME_TAR}" \
-  "${HOME_EXCLUDES[@]}" \
-  "${HOME_INCLUDES[@]}" \
-  --warning=no-file-changed \
-  -C / home || echo "  ! /home 部分文件在读取时已变动"
-cd "${SCRIPT_DIR}"
-
-# 4. 合并备份
+# —— 4. 合并中间文件为最终备份 ——
 echo "  - 合并中间文件 → ${FINAL_TAR}"
-tar -zcvf "${FINAL_TAR}" "${ROOT_TAR}" "${HOME_TAR}" "${CRONTAB_FILE}"
+tar czf "${FINAL_TAR}" root.tar.gz home.tar.gz crontab.txt
 
-# 5. 删除中间文件
-echo "  - 清理中间文件"
-rm -f "${ROOT_TAR}" "${HOME_TAR}" "${CRONTAB_FILE}"
+# —— 5. 删除中间文件 ——
+rm -f root.tar.gz home.tar.gz crontab.txt
 
-# 6. 上传并清理远端
+# —— 6. 上传到各远端 ——
 for REMOTE in "${PIKPAK_REMOTE}" "${ONEDRIVE_REMOTE}" "${S3_REMOTE}"; do
   echo "  - 上传 ${FINAL_TAR} → ${REMOTE}"
   if rclone copy "${FINAL_TAR}" "${REMOTE}/"; then
     echo "    > 上传成功"
   else
-    echo "    ! 上传失败，继续下一个"
+    echo "    ! 上传失败，跳过剩余步骤"
     continue
   fi
 
-  echo "  - 保留最新 ${MAX_BACKUPS} 份：前缀 ${BACKUP_PREFIX}-"
-  BACKUPS=$(rclone lsf "${REMOTE}/" | grep "^${BACKUP_PREFIX}-.*\.tar\.gz\$" | sort)
-  COUNT=$(echo "${BACKUPS}" | wc -l)
-  if (( COUNT > MAX_BACKUPS )); then
-    echo "    - 删除旧备份 $((COUNT - MAX_BACKUPS)) 个"
-    echo "${BACKUPS}" | head -n $((COUNT - MAX_BACKUPS)) | while read -r OLD; do
-      echo "      删除：${OLD}"
-      rclone deletefile "${REMOTE}/${OLD}" || echo "        ! 删除失败"
+  # —— 7. 删除远端旧备份，仅保留最新 N 份 ——
+  echo "  - 保留最新 ${MAX_BACKUPS} 份备份：前缀 ${BACKUP_PREFIX}-"
+  BACKUPS=$(rclone lsf "${REMOTE}/" | grep "^${BACKUP_PREFIX}-.*\.tar\.gz$" | sort)
+  BACKUP_COUNT=$(echo "$BACKUPS" | wc -l)
+  if (( BACKUP_COUNT > MAX_BACKUPS )); then
+    # 列出超出部分并逐个删除
+    DELETE_LIST=$(echo "$BACKUPS" | head -n $((BACKUP_COUNT - MAX_BACKUPS)))
+    echo "$DELETE_LIST" | while read -r OLD_FILE; do
+      echo "    - 删除旧备份：$OLD_FILE"
+      rclone deletefile "${REMOTE}/${OLD_FILE}" || echo "      ! 删除失败"
     done
   else
-    echo "    无需清理（当前 $COUNT 个）"
+    echo "    当前备份数：$BACKUP_COUNT，无需清理"
   fi
 done
 
-# 7. 删除本地最终备份
+# —— 8. 删除本地最终备份文件 ——
 echo "  - 删除本地 ${FINAL_TAR}"
 rm -f "${FINAL_TAR}"
 
