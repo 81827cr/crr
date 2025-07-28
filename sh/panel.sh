@@ -5,6 +5,17 @@ sed -i "/alias p=.*panel\.sh.*/d" ~/.bashrc
 echo "alias p='$(realpath "$0")'" >> ~/.bashrc
 echo -e "\033[1;33m已自动更新 p 快捷命令，执行 source ~/.bashrc 生效\033[0m"
 
+# 如果 ~/.profile 不存在，则创建并写入内容；存在则跳过
+if [ ! -f ~/.profile ]; then
+  cat > ~/.profile <<'EOF'
+if [ "$BASH" ]; then
+  if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+  fi
+fi
+EOF
+fi
+
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
