@@ -4,6 +4,7 @@ set -euo pipefail
 ### 恢复脚本：restore_vps.sh ###
 # 用途：从 rclone 远端下载并恢复 vps 备份
 
+# 定义脚本所在目录，用于后续路径引用
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 echo "[INFO] 脚本目录：${SCRIPT_DIR}"
 
@@ -83,51 +84,44 @@ fi
 
 # 5.3 恢复 SSH 服务端和密钥对
 echo -e "\n—— 恢复 SSH 服务端和密钥对 ——"
-read -rp "是否恢复 SSH 密钥及配置？ [y/N]: " ans
+read -rp "是否恢复 SSH 密钥？ [y/N]: " ans
 if [[ "${ans,,}" == y* ]]; then
   mkdir -p tmp_ssh
   if [[ -d root/.ssh ]]; then
-    echo "[INFO] 使用解压后的 root/.ssh"
+    echo "[INFO] 使用临时 root/.ssh 目录"
     rm -rf /root/.ssh && cp -a root/.ssh /root/.ssh
   else
-    echo "[INFO] 尝试从 root.tar.gz 提取 .ssh"
+    echo "[INFO] 从 root.tar.gz 提取 .ssh"
     tar -zxf root.tar.gz -C tmp_ssh ".ssh" 2>/dev/null || true
     if [[ -d tmp_ssh/.ssh ]]; then
       rm -rf /root/.ssh && cp -a tmp_ssh/.ssh /root/.ssh
     else
-      echo "[WARN] 未找到 .ssh，跳过"
+      echo "[WARN] root.tar.gz 中无 .ssh，已跳过"
     fi
   fi
 
-  echo "[INFO] 设置 /root/.ssh 权限"
-  chmod 700 /root/.ssh
+  # 设置权限
+  chmod 700 /root/.ssh || true
   chmod 600 /root/.ssh/id_* 2>/dev/null || true
   chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts /root/.ssh/config 2>/dev/null || true
 
-  echo "[INFO] 配置 /etc/ssh/sshd_config"
-
-  # 清除旧配置
+  # 配置 sshd_config
   for key in RSAAuthentication PubkeyAuthentication PermitRootLogin PasswordAuthentication Port; do
     sed -i "/^${key}/d" /etc/ssh/sshd_config
   done
-
-  # 用户输入端口
-  SSH_PORT=22
-  read -rp "输入 SSH 端口号 (留空为默认 22): " input_port
-  [[ -n "$input_port" ]] && SSH_PORT="$input_port"
-
-  # 添加新配置（顶部插入）
-  sed -i "1iPort ${SSH_PORT}" /etc/ssh/sshd_config
-  sed -i '1iPasswordAuthentication no' /etc/ssh/sshd_config
-  sed -i '1iPermitRootLogin yes' /etc/ssh/sshd_config
-  sed -i '1iPubkeyAuthentication yes' /etc/ssh/sshd_config
-  sed -i '1iRSAAuthentication yes' /etc/ssh/sshd_config
+  {
+    echo "Port 22"
+    echo "PasswordAuthentication no"
+    echo "PermitRootLogin yes"
+    echo "PubkeyAuthentication yes"
+    echo "RSAAuthentication yes"
+  } >> /etc/ssh/sshd_config
 
   echo "[INFO] 重启 SSH 服务"
   systemctl restart sshd || service ssh restart
 
-  echo "[INFO] ufw 放行 SSH 端口 ${SSH_PORT}"
-  ufw allow "${SSH_PORT}" || true
+  echo "[INFO] ufw 放行 SSH 端口 22"
+  ufw allow 22 || true
 fi
 
 # 6. 恢复 crontab
