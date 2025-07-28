@@ -1,153 +1,144 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-### 恢复脚本：restore_vps.sh ###
-# 用途：从 rclone 远端下载并恢复 vps 备份
+### 恢复脚本：restore_vkvm_tar.sh ###
+# 用途：从 rclone 远端下载并恢复 vps 备份（tar 归档）
 
+# 定义脚本所在目录，用于后续路径引用
+declare SCRIPT_DIR
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-echo "[INFO] 脚本目录：${SCRIPT_DIR}"
 
 # 1. 检查 rclone 是否安装
 if ! command -v rclone >/dev/null 2>&1; then
-  echo "[INFO] rclone 未安装，正在安装..."
+  echo "rclone 未安装，正在安装..."
   curl https://rclone.org/install.sh | sudo bash
 fi
 
-# 列出可用 rclone remotes
-echo "[INFO] 可用的 rclone remotes："
+echo "可用的 rclone remotes："
+# 列出所有 rclone 配置
 rclone listremotes
 
 # 2. 选择 rclone 配置
-echo "[INPUT] 请选择一个 rclone 配置："
-mapfile -t REMOTE_LIST < <(rclone listremotes | sed 's/:$//')
+echo "请选择一个 rclone 配置："
+REMOTE_LIST=( $(rclone listremotes) )
 select REMOTE in "${REMOTE_LIST[@]}"; do
-  [[ -n "$REMOTE" ]] && { echo "[INFO] 已选择：$REMOTE"; break; }
-  echo "[WARN] 无效选择，请重试。"
+  if [[ -n "$REMOTE" ]]; then
+    REMOTE="${REMOTE%:}"
+    echo "已选择远端配置：$REMOTE"
+    break
+  else
+    echo "无效选择，请重新选择。"
+  fi
 done
 
 REMOTE_PATH="vps/backup"
 
-# 3. 获取备份列表
-echo "[INFO] 获取 ${REMOTE}:${REMOTE_PATH} 下的备份文件列表..."
-mapfile -t ARCHIVES < <(rclone lsf "${REMOTE}:${REMOTE_PATH}/" | grep -E '\.tar\.gz$')
-[[ ${#ARCHIVES[@]} -gt 0 ]] || { echo "[ERROR] 未找到 .tar.gz 备份文件，退出。"; exit 1; }
+# 3. 获取远端目录中的所有备份文件
+echo "获取 ${REMOTE}:${REMOTE_PATH} 目录下的备份文件..."
+BACKUP_FILES=( $(rclone lsf "${REMOTE}:${REMOTE_PATH}/") )
+if [[ ${#BACKUP_FILES[@]} -eq 0 ]]; then
+  echo "该目录没有备份文件，退出脚本。"
+  exit 1
+fi
 
-echo "[INPUT] 请选择要恢复的备份："
-select BACKUP in "${ARCHIVES[@]}"; do
-  [[ -n "$BACKUP" ]] && { echo "[INFO] 选中：$BACKUP"; break; }
-  echo "[WARN] 无效选择，请重试。"
+# 显示备份文件列表
+echo "请选择要恢复的备份文件："
+select BACKUP_TAR in "${BACKUP_FILES[@]}"; do
+  if [[ -n "$BACKUP_TAR" ]]; then
+    echo "已选择备份文件：$BACKUP_TAR"
+    break
+  else
+    echo "无效选择，请重新选择。"
+  fi
 done
 
-# 4. 下载并解压主档
-TMP_DIR="${SCRIPT_DIR}/tmp"
-mkdir -p "$TMP_DIR"
-echo "[INFO] 下载 $REMOTE:$REMOTE_PATH/$BACKUP 到 $TMP_DIR/"
-rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP}" "$TMP_DIR/"
+# 4. 下载备份文件到临时目录
+mkdir -p "${SCRIPT_DIR}/tmp"
+echo "下载 ${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR} 到 tmp/"
+rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR}" "${SCRIPT_DIR}/tmp/"
 
-cd "$TMP_DIR"
-echo "[INFO] 解压 $BACKUP..."
-tar -zxf "$BACKUP"
+# 5. 交互式恢复
+downloaded="${SCRIPT_DIR}/tmp/${BACKUP_TAR}"
+cd "${SCRIPT_DIR}/tmp" || exit
 
-# 5.1 恢复 /root
-echo -e "\n—— 恢复 /root ——"
-read -rp "是否覆盖并恢复 /root？ [y/N]: " ans
-if [[ "${ans,,}" == y* ]]; then
-  echo "[INFO] 清空 /root 下旧文件"
-  rm -rf /root/* /root/.[!.]* || true
-
-  if [[ -f root.tar.gz ]]; then
-    echo "[INFO] 解压 root.tar.gz 到 /root"
-    tar -zxf root.tar.gz -C /root || echo "[ERROR] 解压 root.tar.gz 失败，跳过该步骤"
-  else
-    echo "[WARN] 未找到 root.tar.gz，跳过 /root 恢复"
-  fi
+# 解压总包（假设为 tar.gz 或 tar）
+echo "解压 ${BACKUP_TAR} → tmp/"
+# 支持 .tar.gz 或 .tar
+if [[ "$BACKUP_TAR" =~ \.(tar\.gz|tgz)$ ]]; then
+  tar -xzvf "$BACKUP_TAR"
+elif [[ "$BACKUP_TAR" =~ \.tar$ ]]; then
+  tar -xvf "$BACKUP_TAR"
 else
-  echo "[INFO] 仅删除 /root/.ssh 下所有内容"
-  rm -rf /root/.ssh/* || true
+  echo "不支持的归档格式：$BACKUP_TAR"
+  exit 1
 fi
 
-# 5.2 恢复 /home
-echo -e "\n—— 恢复 /home ——"
-read -rp "是否覆盖并恢复 /home？ [y/N]: " ans
+# 5.1 是否恢复 /root 目录
+read -rp "是否恢复 /root 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  echo "[INFO] 清空 /home 下旧文件"
-  rm -rf /home/* /home/.[!.]* || true
-
-  if [[ -f home.tar.gz ]]; then
-    echo "[INFO] 解压 home.tar.gz 到 /home"
-    tar -zxf home.tar.gz -C /home || echo "[ERROR] 解压 home.tar.gz 失败，跳过该步骤"
-  else
-    echo "[WARN] 未找到 home.tar.gz，跳过 /home 恢复"
-  fi
+  echo "解压 root.tar.gz → tmp/"
+  tar -xzvf root.tar.gz || tar -xvf root.tar
+  echo "覆盖 tmp/root/ 到 /root/"
+  cp -a root/. /root/
 fi
 
-# 5.3 恢复 SSH 服务端和密钥对
-echo -e "\n—— 恢复 SSH 服务端和密钥对 ——"
-read -rp "是否恢复 SSH 密钥及配置？ [y/N]: " ans
+# 5.2 是否恢复 /home 目录
+read -rp "是否恢复 /home 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  mkdir -p tmp_ssh
-  if [[ -d root/.ssh ]]; then
-    echo "[INFO] 使用解压后的 root/.ssh"
-    rm -rf /root/.ssh && cp -a root/.ssh /root/.ssh
-  else
-    echo "[INFO] 尝试从 root.tar.gz 提取 .ssh"
-    tar -zxf root.tar.gz -C tmp_ssh ".ssh" 2>/dev/null || true
-    if [[ -d tmp_ssh/.ssh ]]; then
-      rm -rf /root/.ssh && cp -a tmp_ssh/.ssh /root/.ssh
-    else
-      echo "[WARN] 未找到 .ssh，跳过"
-    fi
-  fi
+  echo "解压 home.tar.gz → tmp/"
+  tar -xzvf home.tar.gz || tar -xvf home.tar
+  echo "覆盖 tmp/home/ 到 /home/"
+  cp -a home/. /home/
+fi
 
-  echo "[INFO] 设置 /root/.ssh 权限"
+# 5.3 是否恢复 SSH 服务端和密钥对
+read -rp "是否恢复 SSH 服务端和密钥对？ [y/N]：" ans
+if [[ "${ans,,}" == y* ]]; then
+  echo "设置 /root/.ssh 权限"
   chmod 700 /root/.ssh
   chmod 600 /root/.ssh/id_* 2>/dev/null || true
   chmod 644 /root/.ssh/*.pub /root/.ssh/known_hosts /root/.ssh/config 2>/dev/null || true
 
-  echo "[INFO] 配置 /etc/ssh/sshd_config"
-
-  # 清除旧配置
-  for key in RSAAuthentication PubkeyAuthentication PermitRootLogin PasswordAuthentication Port; do
+  echo "配置 /etc/ssh/sshd_config"
+  # 删除旧条目
+  for key in RSAAuthentication PubkeyAuthentication PermitRootLogin PasswordAuthentication; do
     sed -i "/^${key}/d" /etc/ssh/sshd_config
   done
+  # 删除所有包含 Port 的行
+  sed -i '/^Port/d' /etc/ssh/sshd_config
 
-  # 用户输入端口
-  SSH_PORT=22
-  read -rp "输入 SSH 端口号 (留空为默认 22): " input_port
-  [[ -n "$input_port" ]] && SSH_PORT="$input_port"
+  # 默认插入 Port 22，用户可覆盖
+  sed -i '1iPort 22' /etc/ssh/sshd_config
+  read -rp "输入 SSH 端口号 (留空保留默认 22)：" SSH_PORT
+  if [[ -n "$SSH_PORT" ]]; then
+    sed -i "/^Port /d" /etc/ssh/sshd_config
+    sed -i "1iPort ${SSH_PORT}" /etc/ssh/sshd_config
+  fi
 
-  # 添加新配置（顶部插入）
-  sed -i "1iPort ${SSH_PORT}" /etc/ssh/sshd_config
+  # 插入其它认证设置（顺序从底向上）
   sed -i '1iPasswordAuthentication no' /etc/ssh/sshd_config
   sed -i '1iPermitRootLogin yes' /etc/ssh/sshd_config
   sed -i '1iPubkeyAuthentication yes' /etc/ssh/sshd_config
   sed -i '1iRSAAuthentication yes' /etc/ssh/sshd_config
 
-  echo "[INFO] 重启 SSH 服务"
+  echo "重启 SSH 服务"
   systemctl restart sshd || service ssh restart
-
-  echo "[INFO] ufw 放行 SSH 端口 ${SSH_PORT}"
-  ufw allow "${SSH_PORT}" || true
 fi
 
-# 6. 恢复 crontab
-echo -e "\n—— 恢复 crontab ——"
-read -rp "是否覆盖当前 crontab？ [y/N]: " ans
+# 6. 恢复 crontab 定时任务
+read -rp "是否覆盖当前服务器的 crontab？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  [[ -f crontab.txt ]] && {
-    echo "[INFO] 清空当前 crontab"
-    crontab -r || true
-    echo "[INFO] 导入 crontab.txt"
-    crontab crontab.txt
-  } || echo "[WARN] 未找到 crontab.txt，跳过"
+  echo "  - 清空当前 crontab 任务"
+  crontab -r || true
+  echo "  - 导入 tmp/crontab.txt"
+  crontab "${SCRIPT_DIR}/tmp/crontab.txt"
 fi
 
-# 7. 清理临时目录
-echo -e "\n—— 清理临时目录 ——"
-read -rp "是否删除临时目录 $TMP_DIR？ [y/N]: " ans
+# 7. 删除临时目录 tmp
+read -rp "是否删除脚本目录下的 tmp？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  rm -rf "$TMP_DIR"
-  echo "[INFO] 已删除 $TMP_DIR"
+  echo "删除临时目录 ${SCRIPT_DIR}/tmp"
+  rm -rf "${SCRIPT_DIR}/tmp"
 fi
 
-echo "[INFO] 恢复完成！"
+echo "所有操作结束！"
