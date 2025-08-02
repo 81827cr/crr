@@ -77,9 +77,19 @@ function setup_caddy()    { run_remote "https://raw.githubusercontent.com/81827c
 function set_dns()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_dns.sh"; }
 function backup()         { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/backup.sh"; }
 function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
-function qb()             { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/qb.sh"; }
+function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
 
+# 安装 rclone
+function install_rclone() {
+  # 1. 下载并执行官方安装脚本
+  run_remote "https://rclone.org/install.sh"
+
+  # 2. 确保配置目录存在，并创建一个空的 rclone.conf
+  mkdir -p ~/.config/rclone
+  touch ~/.config/rclone/rclone.conf
+
+}
 
 
 function show_sysinfo() {
@@ -166,7 +176,8 @@ function show_menu() {
   echo -e "${YELLOW}[12] 备份vps${NC}"
   echo -e "${YELLOW}[13] 还原vps${NC}"
   echo -e "${YELLOW}[14] 安装qBittorrent${NC}"
-  echo -e "${YELLOW}[15] test测试${NC}"
+  echo -e "${YELLOW}[15] 安装rclone${NC}"
+  echo -e "${YELLOW}[16] test测试${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
@@ -185,8 +196,9 @@ function show_menu() {
     11) set_dns ;;
     12) backup ;;
     13) recover ;;
-    14) qb ;;
-    15) test ;;
+    14) install_qb ;;
+    15) install_rclone ;;
+    16) test ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac
