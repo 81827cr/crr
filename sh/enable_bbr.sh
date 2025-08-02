@@ -186,6 +186,13 @@ BBR 简化管理脚本 v${sh_ver}
  0. 退出脚本
 "
     read -rp "请输入选项 [0-4]: " opt
+
+    # 直接回车时退出
+    if [[ -z "$opt" ]]; then
+        info "检测到空输入，退出脚本。"
+        exit 0
+    fi
+    
     case "$opt" in
         1) install_bbr_kernel ;;
         2) check_and_prompt_old_kernel_removal ;;
