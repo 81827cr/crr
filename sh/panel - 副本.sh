@@ -67,19 +67,89 @@ function set_timezone() {
   pause_and_back
 }
 
-function set_ssh()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_ssh.sh"; }
-function linux_clean()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_clean.sh"; }
-function set_swap()       { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_swap.sh"; }
-function enable_bbr()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/enable_bbr.sh"; }
-function security_check() { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_security_check.sh"; }
-function port_forward()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/port_forward.sh"; }
-function setup_caddy()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/setup_caddy.sh"; }
-function set_dns()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_dns.sh"; }
-function backup()         { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/backup.sh"; }
-function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
-function qb()             { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/qb.sh"; }
-function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
+function set_ssh() {
+  tmp_script="./set_ssh.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_ssh.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
 
+function linux_clean() {
+  tmp_script="./linux_clean.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_clean.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function set_swap() {
+  tmp_script="./set_swap.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function enable_bbr() {
+  tmp_script="./enable_bbr.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/enable_bbr.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function security_check() {
+  tmp_script="./linux_security_check.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function port_forward() {
+  tmp_script="./port_forward.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function setup_caddy() {
+  tmp_script="./setup_caddy.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function set_dns() {
+  tmp_script="./set_dns.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_dns.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function backup() {
+  tmp_script="./backup.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/backup.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function recover() {
+  tmp_script="./recover.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/recover.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function qb() {
+  tmp_script="./qb.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/qb.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
+
+function test() {
+  tmp_script="./test.sh"
+  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/test.sh -o "$tmp_script" && bash "$tmp_script"
+  rm -f "$tmp_script"
+  pause_and_back
+}
 
 
 function show_sysinfo() {
