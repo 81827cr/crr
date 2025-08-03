@@ -21,7 +21,7 @@ function frp_base() {
 function install_frps() {
   frp_base
   # 随机端口 & token
-  PORT=$(( RANDOM % 55536 + 10000 ))
+  PORT=7000
   TOKEN=$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c16)
 
   # 放行端口（有 ufw 则生效，无 ufw 则忽略错误）
@@ -61,7 +61,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=$(which frps) -c ~/frp/frps.toml
+ExecStart=$HOME/frp/frps -c $HOME/frp/frps.toml
 
 [Install]
 WantedBy=multi-user.target
@@ -78,11 +78,8 @@ EOF
   echo -e "\n✅ frps 安装并启动完成！bindPort=$PORT  token=$TOKEN\n"
   echo "—— frpc 客户端示例 ——"
   cat <<EOF
-
-[common]
 serverAddr = "YOUR_FRPS_SERVER_IP"
 serverPort = $PORT
-
 auth.method = "token"
 auth.token = "$TOKEN"
 EOF
@@ -95,7 +92,7 @@ function manage_frpc() {
 
   # 检查已有保活任务
   pm2 info frpc >/dev/null 2>&1 && U_PM2=true || U_PM2=false
-  systemctl is-active frpc >/dev/null 2>&1 && U_SD=true || U_SD=false
+  [[ -f /etc/systemd/system/frpc.service ]] && U_SD=true || U_SD=false
 
   if ! $U_PM2 && ! $U_SD; then
     echo "请选择 frpc 保活方式：1) PM2    2) systemd"
@@ -115,12 +112,12 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=$(which frpc) -c ~/frp/frpc.toml
+ExecStart=$HOME/frp/frpc -c $HOME/frp/frpc.toml
 
 [Install]
 WantedBy=multi-user.target
 EOF
-        systemctl daemon-reload; systemctl enable frpc; systemctl restart frpc
+        systemctl daemon-reload; systemctl enable frpc
         ;;
       *)
         echo "无效选项，已取消。"; return
@@ -132,42 +129,42 @@ EOF
 
   # 追加代理配置
   echo
-  read -p "请输入穿透服务名字（回车退出）: " NAME || return
+  read -p "请输入穿透服务名字: " NAME || return
   [ -z "$NAME" ] && return
-  read -p "请输入内网端口（回车退出）: " LPORT || return
+  read -p "请输入内网端口: " LPORT || return
   [ -z "$LPORT" ] && return
-  read -p "请输入外网端口（回车退出）: " RPORT || return
+  read -p "请输入外网端口: " RPORT || return
   [ -z "$RPORT" ] && return
-  read -p "请输入内网 IP（回车退出）: " LIP || return
-  [ -z "$LIP" ] && return
+  read -p "请输入内网 IP（默认127.0.0.1）: " LIP
+  LIP=${LIP:-127.0.0.1}
 
   cat >> frpc.toml <<EOF
 
 [[proxies]]
 name = "$NAME"
 type = "tcp"
-local_ip = "$LIP"
-local_port = $LPORT
-remote_port = $RPORT
+localIP = "$LIP"
+localPort = $LPORT
+remotePort = $RPORT
 EOF
 
-  echo "设置 UFW：放行端口 $RPORT"
-  ufw allow "$RPORT" 2>/dev/null || true
+  echo "设置 UFW：放行端口 $LPORT"
+  ufw allow "$LPORT" 2>/dev/null || true
 
   # 重启保活
   $U_PM2   && pm2 restart frpc
   $U_SD    && systemctl restart frpc
 
-  echo -e "\n✅ 已追加代理 \"$NAME\" (remote_port=$RPORT)"
   echo "请确保 frps 服务器已放行相同端口。"
+  echo -e "配置名: $NAME  外网端口: $RPORT"
   echo
 }
 
 # —— 功能 3：卸载 frp —— #
 function uninstall_frp() {
   echo ">> 停止并删除 PM2 进程"
-  pm2 delete frps frpc >/dev/null 2>&1 || true
-
+  pm2 delete frps >/dev/null 2>&1 || true
+  pm2 delete frpc >/dev/null 2>&1 || true
   echo ">> 停止并移除 systemd 服务"
   systemctl stop frps.service frpc.service >/dev/null 2>&1 || true
   systemctl disable frps.service frpc.service >/dev/null 2>&1 || true
