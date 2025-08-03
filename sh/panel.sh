@@ -88,7 +88,13 @@ function install_rclone() {
   # 2. 确保配置目录存在，并创建一个空的 rclone.conf
   mkdir -p ~/.config/rclone
   touch ~/.config/rclone/rclone.conf
-
+}
+# 安装 node
+function install_node() {
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  source ~/.bashrc
+  nvm install node
+  pause_and_back
 }
 
 
@@ -177,7 +183,8 @@ function show_menu() {
   echo -e "${YELLOW}[13] 还原vps${NC}"
   echo -e "${YELLOW}[14] 安装qBittorrent${NC}"
   echo -e "${YELLOW}[15] 安装rclone${NC}"
-  echo -e "${YELLOW}[16] test测试${NC}"
+  echo -e "${YELLOW}[16] 安装node${NC}"
+  echo -e "${YELLOW}[17] test测试${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
@@ -198,7 +205,8 @@ function show_menu() {
     13) recover ;;
     14) install_qb ;;
     15) install_rclone ;;
-    16) test ;;
+    16) install_node ;;
+    17) test ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac
