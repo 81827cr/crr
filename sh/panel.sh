@@ -78,7 +78,7 @@ function set_dns()        { run_remote "https://raw.githubusercontent.com/81827c
 function backup()         { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/backup.sh"; }
 function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
 function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
-function set_frp()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
+function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
 
 # 安装 rclone
