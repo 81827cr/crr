@@ -17,21 +17,6 @@ function frp_base() {
   cd frp/
 }
 
-# —— 检查并安装 PM2 —— #
-function ensure_pm2_installed() {
-  if command -v node >/dev/null 2>&1; then
-    echo "Node.js 已安装，跳过 nvm 安装"
-  else
-    echo "未检测到 Node.js，正在通过 nvm 安装..."
-    bash <(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh)
-    source ~/.bashrc
-    nvm install node
-  fi
-
-  echo "安装 pm2..."
-  npm install -g pm2
-}
-
 # —— 功能 1：安装 & 启动 frps —— #
 function install_frps() {
   frp_base
@@ -58,7 +43,10 @@ EOF
   case "$opt" in
     1)
       # 安装 nvm/node + pm2
-      ensure_pm2_installed
+      bash <(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh)
+      source ~/.bashrc
+      nvm install node
+      npm install -g pm2
 
       # 启动并保活
       pm2 start ~/frp/frps --name frps -- -c ~/frp/frps.toml
@@ -111,9 +99,8 @@ function manage_frpc() {
     read -p "> " opt
     case "$opt" in
       1)
-        # 安装 nvm/node + pm2
-        ensure_pm2_installed
-
+        bash <(curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh)
+        source ~/.bashrc; nvm install node; npm install -g pm2
         pm2 start ~/frp/frpc --name frpc -- -c ~/frp/frpc.toml
         pm2 startup; pm2 save
         ;;
