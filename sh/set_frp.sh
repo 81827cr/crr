@@ -6,15 +6,15 @@ set -e
 function frp_base() {
   # 如果已经有 ~/frp，就跳过下载
   if [ -d "$HOME/frp" ]; then
-    cd "$HOME/frp"
+    cd "$HOME/frp/"
     return
   fi
 
   cd "$HOME"
   wget -q https://github.com/fatedier/frp/releases/download/v0.63.0/frp_0.63.0_linux_amd64.tar.gz
   tar -zxf frp_0.63.0_linux_amd64.tar.gz && rm frp_0.63.0_linux_amd64.tar.gz
-  mv frp_0.63.0_linux_amd64 frp
-  cd frp
+  mv frp_0.63.0_linux_amd64/ frp/
+  cd frp/
 }
 
 # —— 功能 1：安装 & 启动 frps —— #
@@ -29,7 +29,7 @@ function install_frps() {
   ufw allow "$PORT" 2>/dev/null || true
 
   # 写 frps.toml（每次重写）
-  cat > frp/frps.toml <<EOF
+  cat > frps.toml <<EOF
 bindAddr = "0.0.0.0"
 bindPort = $PORT
 
@@ -80,11 +80,11 @@ EOF
   cat <<EOF
 
 [common]
-serverAddr = \"YOUR_FRPS_SERVER_IP\"
+serverAddr = "YOUR_FRPS_SERVER_IP"
 serverPort = $PORT
 
-auth.method = \"token\"
-auth.token = \"$TOKEN\"
+auth.method = "token"
+auth.token = "$TOKEN"
 EOF
   echo
 }
@@ -163,19 +163,50 @@ EOF
   echo
 }
 
+# —— 功能 3：卸载 frp —— #
+function uninstall_frp() {
+  echo ">> 停止并删除 PM2 进程"
+  pm2 delete frps frpc >/dev/null 2>&1 || true
+
+  echo ">> 停止并移除 systemd 服务"
+  systemctl stop frps.service frpc.service >/dev/null 2>&1 || true
+  systemctl disable frps.service frpc.service >/dev/null 2>&1 || true
+  rm -f /etc/systemd/system/frps.service /etc/systemd/system/frpc.service
+  systemctl daemon-reload
+
+  echo ">> 删除 frp 目录"
+  rm -rf ~/frp
+
+  echo ">> 更新 PM2 启动项并保存"
+  pm2 startup >/dev/null 2>&1 || true
+  pm2 save >/dev/null 2>&1 || true
+
+  echo -e "\n✅ frp 已彻底卸载完成！\n"
+}
+
 # —— 菜单入口 —— #
 function show_menu() {
   clear
   echo "1) 安装 frps 服务端"
   echo "2) 管理 frpc 客户端"
+  echo "3) 卸载 frp"
   echo "0) 退出"
   read -p "请选择: " num
+
+  # 如果直接按回车，退出脚本
+  if [[ -z "$num" ]]; then
+    echo "已退出"
+    exit 0
+  fi
+
   case "$num" in
     1) install_frps ;;
     2) manage_frpc ;;
+    3) uninstall_frp ;;
     0) exit 0 ;;
     *) echo "无效输入"; sleep 1; show_menu ;;
   esac
 }
+
 
 show_menu
