@@ -3,7 +3,6 @@
 # 自动设置 alias（清除旧路径，添加当前路径）
 sed -i "/alias p=.*panel\.sh.*/d" ~/.bashrc
 echo "alias p='$(realpath "$0")'" >> ~/.bashrc
-echo -e "\033[1;33m已自动更新 p 快捷命令，执行 source ~/.bashrc 生效\033[0m"
 
 # 如果 ~/.profile 不存在，则创建并写入内容；存在则跳过
 if [ ! -f ~/.profile ]; then
@@ -81,6 +80,9 @@ function recover()        { run_remote "https://raw.githubusercontent.com/81827c
 function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
 function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
+# ======================================================================================================================
+function install_xui()    { run_remote "https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh"; }
+function install_warp() { wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh '[option]' '[lisence/url/token]'; }
 
 # 安装 rclone
 function install_rclone() {
@@ -167,6 +169,87 @@ function show_sysinfo() {
   pause_and_back
 }
 
+# —— 新增：一键调优（全自动，无交互） ——  
+function one_click_tune() {
+  clear
+  echo -e "${CYAN}===== 一键调优开始 =====${NC}"
+
+  # 临时把 pause_and_back 变成空函数，防止中途卡在“按回车返回菜单”
+  local orig_pause
+  orig_pause=$(declare -f pause_and_back)
+  pause_and_back() { :; }
+
+  # 1. 设置时区（直接调用，无需输入）
+  echo -e "${CYAN}→ 设置时区为 Asia/Shanghai${NC}"
+  set_timezone
+
+  # 2. 启用 BBR（向 enable_bbr 传入“3”）
+  echo -e "${CYAN}→ 启用 BBR 加速（自动选择“3”）${NC}"
+  printf "3\n" | enable_bbr
+
+  # 3. 安装常用软件包（向 install_packages 传入空行，表示回车不排除任何包）
+  echo -e "${CYAN}→ 安装默认常用软件包（全装）${NC}"
+  printf "\n" | install_packages
+
+  # 4. DNS 优化（向 set_dns 传入“1”，表示国外 DNS）
+  echo -e "${CYAN}→ 优化 DNS（自动选择“1”）${NC}"
+  printf "1\n" | set_dns
+
+  # 恢复 pause_and_back
+  eval "$orig_pause"
+
+  echo -e "${GREEN}===== 一键调优完成，按回车返回菜单 =====${NC}"
+  read
+  show_menu
+}
+
+
+# —— 新增：打印所有快捷命令 ——  
+function show_help() {
+  clear
+  echo -e "${CYAN}软件管理${NC}"
+  echo "------------------------"
+  echo -e "  安装 qBittorrent      ${CYAN}p qb${NC}"
+  echo -e "  frp 管理              ${CYAN}p frp${NC}"
+  echo -e "  安装 rclone           ${CYAN}p rclone${NC}"
+  echo -e "  caddy 反代            ${CYAN}p caddy${NC}"
+  echo -e "  安装 node             ${CYAN}p node${NC}"
+  echo -e "  安装 3x-ui            ${CYAN}p xui${NC}"
+  echo -e "  安装 warp             ${CYAN}p warp${NC}"
+  echo
+  echo -e "${CYAN}系统管理${NC}"
+  echo "------------------------"
+  echo -e "  一键调优              ${CYAN}p ok${NC}"
+  echo -e "  开启 BBR 加速         ${CYAN}p bbr${NC}"
+  echo -e "  设置虚拟内存 Swap     ${CYAN}p swap${NC}"
+  echo -e "  修改 DNS 配置         ${CYAN}p dns${NC}"
+  echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
+  echo
+  exit 0
+}
+
+# —— 新增：如果通过 alias 调用时带了第一个参数，就直接分发到对应的函数 ——  
+if [[ $# -ge 1 ]]; then  
+  cmd="$1"; shift  
+  case "$cmd" in  
+    help)   show_help ;;  
+    frp)    set_frp ;;  
+    caddy)  setup_caddy ;;  
+    qb)     install_qb ;;  
+    rclone) install_rclone ;;  
+    xui)    install_xui ;;  
+    node)   install_node ;;  
+    warp)   install_warp ;;  
+    bbr)    enable_bbr ;;  
+    swap)   set_swap ;;
+    dns)    set_dns ;;
+    ssh)    set_ssh ;;
+    ok)     one_click_tune ;;
+    *)      echo -e "${RED}未知命令：${cmd}${NC}" ;;  
+  esac  
+  exit 0  
+fi  
+
 function show_sys_settings() {
   clear
   echo -e "系统设置"
@@ -177,6 +260,7 @@ function show_sys_settings() {
   echo "7.   端口转发                 8.   修改 DNS 配置"
   echo "------------------------"
   echo "9.   test 测试               10.  一键调优"
+  echo "------------------------"
   read -p "请输入操作编号: " sub
   case $sub in
     1) set_ssh ;;
@@ -188,7 +272,7 @@ function show_sys_settings() {
     7) port_forward ;;
     8) set_dns ;;
     9) test ;;
-    10) run_remote "https://…/one_click_tune.sh" ;;  # 一键调优脚本 URL
+    10) one_click_tune ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
   esac
 }
@@ -199,7 +283,9 @@ function show_software_mgmt() {
   echo "------------------------"
   echo "1.   安装 qBittorrent       2.   frp 管理"
   echo "3.   安装 rclone            4.   caddy 反代"
-  echo "5.   安装 node"
+  echo "5.   安装 node"             
+  echo "------------------------"
+  echo "11.  安装 3x-ui             12.  安装 warp"
   echo "------------------------"
   read -p "请输入操作编号: " sub
   case $sub in
@@ -208,6 +294,8 @@ function show_software_mgmt() {
     3) install_rclone ;;
     4) setup_caddy ;;
     5) install_node ;;
+    11) install_xui ;;
+    12) install_warp ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
   esac
 }
