@@ -225,4 +225,6 @@ function show_menu() {
 }
 
 
-show_menu
+while true; do
+  show_menu
+done
