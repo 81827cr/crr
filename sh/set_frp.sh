@@ -80,6 +80,8 @@ After=network.target
 [Service]
 User=root
 ExecStart=$HOME/frp/frps -c $HOME/frp/frps.toml
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
@@ -132,6 +134,8 @@ After=network.target
 [Service]
 User=root
 ExecStart=$HOME/frp/frpc -c $HOME/frp/frpc.toml
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
