@@ -1,16 +1,33 @@
 #!/bin/bash
 
-# 自动设置 alias（不会覆盖 .bashrc，不会重复添加）
-if ! grep -Fxq "alias p='$(realpath "$0")'" ~/.bashrc; then
-  echo "alias p='$(realpath "$0")'" >> ~/.bashrc
-  echo -e "\033[1;33m已自动添加 p 快捷命令，请重新打开终端或执行：source ~/.bashrc\033[0m"
+# 自动设置 alias（清除旧路径，添加当前路径）
+sed -i "/alias p=.*panel\.sh.*/d" ~/.bashrc
+echo "alias p='$(realpath "$0")'" >> ~/.bashrc
+echo -e "\033[1;33m已自动更新 p 快捷命令，执行 source ~/.bashrc 生效\033[0m"
+
+# 如果 ~/.profile 不存在，则创建并写入内容；存在则跳过
+if [ ! -f ~/.profile ]; then
+  cat > ~/.profile <<'EOF'
+if [ "$BASH" ]; then
+  if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+  fi
 fi
+EOF
+fi
+
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
 NC='\033[0m'
+
+# 通用远程脚本执行函数：下载并执行，然后返回菜单
+run_remote() {
+  bash <(curl -fsSL "$1")
+  pause_and_back
+}
 
 function pause_and_back() {
   echo -e "${GREEN}\n操作完成，按回车键返回菜单...${NC}"
@@ -20,12 +37,12 @@ function pause_and_back() {
 
 function install_packages() {
   echo -e "${BLUE}默认安装的包如下：${NC}"
-  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron ufw${NC}"
+  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron sudo ufw${NC}"
   echo -ne "${YELLOW}请输入你不想安装的包（用空格分隔，可留空）：${NC}"
   read exclude
 
   EXCLUDE_ARRAY=($exclude)
-  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron ufw)
+  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron sudo ufw)
 
   INSTALL_LIST=()
   for pkg in "${ALL_PACKAGES[@]}"; do
@@ -50,80 +67,35 @@ function set_timezone() {
   pause_and_back
 }
 
-function set_ssh() {
-  tmp_script="./set_ssh.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_ssh.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
+function set_ssh()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_ssh.sh"; }
+function linux_clean()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_clean.sh"; }
+function set_swap()       { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_swap.sh"; }
+function enable_bbr()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/enable_bbr.sh"; }
+function security_check() { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_security_check.sh"; }
+function port_forward()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/port_forward.sh"; }
+function setup_caddy()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/setup_caddy.sh"; }
+function set_dns()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_dns.sh"; }
+function backup()         { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/backup.sh"; }
+function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
+function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
+function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
+function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
+
+# 安装 rclone
+function install_rclone() {
+  # 1. 下载并执行官方安装脚本
+  run_remote "https://rclone.org/install.sh"
+
+  # 2. 确保配置目录存在，并创建一个空的 rclone.conf
+  mkdir -p ~/.config/rclone
+  touch ~/.config/rclone/rclone.conf
 }
 
-function linux_clean() {
-  tmp_script="./linux_clean.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_clean.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function set_swap() {
-  tmp_script="./set_swap.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_swap.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function enable_bbr() {
-  tmp_script="./enable_bbr.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/enable_bbr.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function security_check() {
-  tmp_script="./linux_security_check.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/linux_security_check.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function port_forward() {
-  tmp_script="./port_forward.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/port_forward.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function setup_caddy() {
-  tmp_script="./setup_caddy.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/setup_caddy.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function set_dns() {
-  tmp_script="./set_dns.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/set_dns.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function backup() {
-  tmp_script="./backup.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/backup.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function recover() {
-  tmp_script="./recover.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/recover.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
-  pause_and_back
-}
-
-function test() {
-  tmp_script="./test.sh"
-  curl -sSL https://raw.githubusercontent.com/81827cr/crr/refs/heads/main/sh/test.sh -o "$tmp_script" && bash "$tmp_script"
-  rm -f "$tmp_script"
+# 安装 node
+function install_node() {
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  source ~/.bashrc
+  nvm install node
   pause_and_back
 }
 
@@ -211,7 +183,11 @@ function show_menu() {
   echo -e "${YELLOW}[11] 修改 DNS 配置${NC}"
   echo -e "${YELLOW}[12] 备份vps${NC}"
   echo -e "${YELLOW}[13] 还原vps${NC}"
-  echo -e "${YELLOW}[14] test测试${NC}"
+  echo -e "${YELLOW}[14] 安装qBittorrent${NC}"
+  echo -e "${YELLOW}[15] 安装rclone${NC}"
+  echo -e "${YELLOW}[16] 安装node${NC}"
+  echo -e "${YELLOW}[17] frp管理${NC}"
+  echo -e "${YELLOW}[18] test测试${NC}"
   echo -e "${YELLOW}[0] 退出脚本${NC}"
   echo
   read -p "请输入操作编号: " choice
@@ -230,7 +206,11 @@ function show_menu() {
     11) set_dns ;;
     12) backup ;;
     13) recover ;;
-    14) test ;;
+    14) install_qb ;;
+    15) install_rclone ;;
+    16) install_node ;;
+    17) set_frp ;;
+    18) test ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-### 恢复脚本：restore_vkvm.sh ###
-# 用途：从 rclone 远端下载并恢复 vkvm 备份
+### 恢复脚本：restore_vkvm_tar.sh ###
+# 用途：从 rclone 远端下载并恢复 vps 备份（tar 归档）
 
 # 定义脚本所在目录，用于后续路径引用
 declare SCRIPT_DIR
@@ -20,10 +20,9 @@ rclone listremotes
 
 # 2. 选择 rclone 配置
 echo "请选择一个 rclone 配置："
-REMOTE_LIST=($(rclone listremotes))
+REMOTE_LIST=( $(rclone listremotes) )
 select REMOTE in "${REMOTE_LIST[@]}"; do
   if [[ -n "$REMOTE" ]]; then
-    # 去除末尾冒号，防止拼接为 ::
     REMOTE="${REMOTE%:}"
     echo "已选择远端配置：$REMOTE"
     break
@@ -36,7 +35,7 @@ REMOTE_PATH="vps/backup"
 
 # 3. 获取远端目录中的所有备份文件
 echo "获取 ${REMOTE}:${REMOTE_PATH} 目录下的备份文件..."
-BACKUP_FILES=($(rclone lsf "${REMOTE}:${REMOTE_PATH}/"))
+BACKUP_FILES=( $(rclone lsf "${REMOTE}:${REMOTE_PATH}/") )
 if [[ ${#BACKUP_FILES[@]} -eq 0 ]]; then
   echo "该目录没有备份文件，退出脚本。"
   exit 1
@@ -44,9 +43,9 @@ fi
 
 # 显示备份文件列表
 echo "请选择要恢复的备份文件："
-select BACKUP_ZIP in "${BACKUP_FILES[@]}"; do
-  if [[ -n "$BACKUP_ZIP" ]]; then
-    echo "已选择备份文件：$BACKUP_ZIP"
+select BACKUP_TAR in "${BACKUP_FILES[@]}"; do
+  if [[ -n "$BACKUP_TAR" ]]; then
+    echo "已选择备份文件：$BACKUP_TAR"
     break
   else
     echo "无效选择，请重新选择。"
@@ -55,21 +54,30 @@ done
 
 # 4. 下载备份文件到临时目录
 mkdir -p "${SCRIPT_DIR}/tmp"
-echo "下载 ${REMOTE}:${REMOTE_PATH}/${BACKUP_ZIP} 到 tmp/"
-rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP_ZIP}" "${SCRIPT_DIR}/tmp/"
+echo "下载 ${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR} 到 tmp/"
+rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR}" "${SCRIPT_DIR}/tmp/"
 
 # 5. 交互式恢复
+downloaded="${SCRIPT_DIR}/tmp/${BACKUP_TAR}"
 cd "${SCRIPT_DIR}/tmp" || exit
 
-# 解压总包
-echo "解压 ${BACKUP_ZIP} → tmp/"
-unzip -o "${BACKUP_ZIP}"
+# 解压总包（假设为 tar.gz 或 tar）
+echo "解压 ${BACKUP_TAR} → tmp/"
+# 支持 .tar.gz 或 .tar
+if [[ "$BACKUP_TAR" =~ \.(tar\.gz|tgz)$ ]]; then
+  tar -xzvf "$BACKUP_TAR"
+elif [[ "$BACKUP_TAR" =~ \.tar$ ]]; then
+  tar -xvf "$BACKUP_TAR"
+else
+  echo "不支持的归档格式：$BACKUP_TAR"
+  exit 1
+fi
 
 # 5.1 是否恢复 /root 目录
 read -rp "是否恢复 /root 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  echo "解压 root.zip → tmp/"
-  unzip -o root.zip
+  echo "解压 root.tar.gz → tmp/"
+  tar -xzvf root.tar.gz || tar -xvf root.tar
   echo "覆盖 tmp/root/ 到 /root/"
   cp -a root/. /root/
 fi
@@ -77,8 +85,8 @@ fi
 # 5.2 是否恢复 /home 目录
 read -rp "是否恢复 /home 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  echo "解压 home.zip → tmp/"
-  unzip -o home.zip
+  echo "解压 home.tar.gz → tmp/"
+  tar -xzvf home.tar.gz || tar -xvf home.tar
   echo "覆盖 tmp/home/ 到 /home/"
   cp -a home/. /home/
 fi
@@ -97,7 +105,7 @@ if [[ "${ans,,}" == y* ]]; then
     sed -i "/^${key}/d" /etc/ssh/sshd_config
   done
   # 删除所有包含 Port 的行
-  sed -i '/Port/d' /etc/ssh/sshd_config
+  sed -i '/^Port/d' /etc/ssh/sshd_config
 
   # 默认插入 Port 22，用户可覆盖
   sed -i '1iPort 22' /etc/ssh/sshd_config

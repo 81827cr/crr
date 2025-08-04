@@ -9,9 +9,24 @@ MAX_BACKUPS=2
 PIKPAK_REMOTE="pikpak:vps/backup"
 ONEDRIVE_REMOTE="onedrive:vps/backup"
 S3_REMOTE="bing:dps666/vps/backup"
+
+# 排除模式 — 请根据需求编辑
+ROOT_EXCLUDES=(
+  --exclude='root/.*'       # 排除所有隐藏文件（.config/.ssh 除外）
+  --exclude='*.mp4'         # 排除媒体文件
+  --exclude='*.mp3'
+)
+HOME_EXCLUDES=(
+  --exclude='home/d/**'                # 排除 /home/d
+  --exclude='home/tmp/**'              # 排除 /home/tmp
+  --exclude='home/lu/**'               # 排除 /home/lu
+  --exclude='home/live/downloads/**'   # 排除直播录制
+  --exclude='*.mp4'                    # 排除媒体文件
+  --exclude='*.mp3'
+)
 ### =============== ###
 
-# === 参数获取：备份名 ===
+# 参数：备份前缀，如 dc02
 if [[ $# -ge 1 ]]; then
   BACKUP_PREFIX="$1"
 else
@@ -19,86 +34,75 @@ else
   [[ -z "${BACKUP_PREFIX}" ]] && echo "错误：备份名称不能为空！" && exit 1
 fi
 
-# 当前时间戳
-NOW=$(date "+%Y%m%d%H%M")
-FINAL_ZIP="${BACKUP_PREFIX}-${NOW}.zip"
-
-# 脚本所在目录
+NOW=$(date +"%Y%m%d%H%M")
+FINAL_TAR="${BACKUP_PREFIX}-${NOW}.tar.gz"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-# 临时文件名
-ROOT_ZIP="root.zip"
-HOME_ZIP="home.zip"
-CRONTAB_FILE="crontab.txt"
+echo "[$(date '+%F %T')] 开始备份：${FINAL_TAR}"
 
-echo "[$(date '+%F %T')] 开始备份：${FINAL_ZIP}"
+# 清理旧临时文件
+rm -f root.tar.gz home.tar.gz crontab.txt
 
-# —— 清理旧临时文件 ——
-rm -f "${ROOT_ZIP}" "${HOME_ZIP}" "${CRONTAB_FILE}"
-
-# —— 1. 打包 /root ——
-echo "  - 打包 /root → ${ROOT_ZIP}"
+# 1. 打包 /root：先包含 .config/.ssh，再排除其他隐藏文件
+echo "  - 打包 /root → root.tar.gz"
 cd /
-EXCLUDES=( -x "root/.*" -x "*.mp4" "*.mp3" )
-if [[ "${SCRIPT_DIR}" == /root/* && "${SCRIPT_DIR}" != "/root" ]]; then
-  REL_SCRIPT_DIR="${SCRIPT_DIR#/}"
-  EXCLUDES+=( -x "${REL_SCRIPT_DIR}/**" )
-fi
-zip -r "${SCRIPT_DIR}/${ROOT_ZIP}" root "${EXCLUDES[@]}"
-zip -r "${SCRIPT_DIR}/${ROOT_ZIP}" root/.config -x "*.mp4" "*.mp3" || true
-zip -r "${SCRIPT_DIR}/${ROOT_ZIP}" root/.ssh -x "*.mp4" "*.mp3" || true
+tar czf "${SCRIPT_DIR}/root.tar.gz" \
+  --warning=no-file-changed \
+  root/.config root/.ssh \
+  "${ROOT_EXCLUDES[@]}" \
+  root || echo "    注意：/root 部分文件变动，已继续"
+
+# 2. 导出 crontab
+cd "${SCRIPT_DIR}"
+echo "  - 导出 crontab → crontab.txt"
+crontab -l > crontab.txt || true
+
+# 3. 打包 /home
+echo "  - 打包 /home → home.tar.gz"
+cd /
+tar czf "${SCRIPT_DIR}/home.tar.gz" \
+  --warning=no-file-changed \
+  "${HOME_EXCLUDES[@]}" \
+  home || echo "    注意：/home 部分文件变动，已继续"
+
+# 回到脚本目录
 cd "${SCRIPT_DIR}"
 
-# —— 2. 导出 crontab ——
-echo "  - 导出 crontab → ${CRONTAB_FILE}"
-crontab -l > "${CRONTAB_FILE}" || true
+# 4. 合并中间文件为最终备份
+echo "  - 合并中间文件 → ${FINAL_TAR}"
+tar czf "${FINAL_TAR}" root.tar.gz home.tar.gz crontab.txt
 
-# —— 3. 打包 /home ——
-echo "  - 打包 /home → ${HOME_ZIP}"
-cd /
-zip -r "${SCRIPT_DIR}/${HOME_ZIP}" home \
-    -x "home/d/**" "home/tmp/**" "home/lu/**" "home/live/downloads/**" \
-    -x "home/posteio/mail-data/**" \
-    -x "*.mp4" "*.mp3"
-cd "${SCRIPT_DIR}"
+# 5. 删除中间文件
+echo "  - 删除中间文件"
+rm -f root.tar.gz home.tar.gz crontab.txt
 
-# —— 4. 合并文件为最终备份 ——
-echo "  - 合并中间文件 → ${FINAL_ZIP}"
-zip "${FINAL_ZIP}" "${ROOT_ZIP}" "${HOME_ZIP}" "${CRONTAB_FILE}"
-
-# —— 5. 删除中间文件 ——
-rm -f "${ROOT_ZIP}" "${HOME_ZIP}" "${CRONTAB_FILE}"
-
-# —— 6. 上传到各个远端 ——
+# 6. 上传至各远端并清理旧备份
 for REMOTE in "${PIKPAK_REMOTE}" "${ONEDRIVE_REMOTE}" "${S3_REMOTE}"; do
-  echo "  - 上传 ${FINAL_ZIP} → ${REMOTE}"
-  if rclone copy "${FINAL_ZIP}" "${REMOTE}/"; then
+  echo "  - 上传 ${FINAL_TAR} → ${REMOTE}"
+  if rclone copy "${FINAL_TAR}" "${REMOTE}/"; then
     echo "    > 上传成功"
   else
-    echo "    ! 上传失败，继续下一个"
+    echo "    ! 上传失败，跳过该远端"
     continue
   fi
 
-  # —— 7. 删除远端旧备份，仅保留最新 N 份 ——
   echo "  - 保留最新 ${MAX_BACKUPS} 份备份：前缀 ${BACKUP_PREFIX}-"
-  BACKUPS=$(rclone lsf "${REMOTE}/" | grep "^${BACKUP_PREFIX}-.*\.zip$" | sort)
-  BACKUP_COUNT=$(echo "$BACKUPS" | wc -l)
-
-  if (( BACKUP_COUNT > MAX_BACKUPS )); then
-    DELETE_LIST=$(echo "$BACKUPS" | head -n $((BACKUP_COUNT - MAX_BACKUPS)))
-    echo "$DELETE_LIST" | while read -r OLD_FILE; do
-      echo "    - 删除旧备份：$OLD_FILE"
-      rclone deletefile "${REMOTE}/${OLD_FILE}" || echo "      ! 删除失败"
+  BACKUPS=$(rclone lsf "${REMOTE}/" | grep "^${BACKUP_PREFIX}-.*\.tar\.gz\$" | sort)
+  COUNT=$(echo "$BACKUPS" | wc -l)
+  if (( COUNT > MAX_BACKUPS )); then
+    echo "    - 删除旧备份 $((COUNT - MAX_BACKUPS)) 个"
+    echo "$BACKUPS" | head -n $((COUNT - MAX_BACKUPS)) | while read -r OLD; do
+      echo "      删除：$OLD"
+      rclone deletefile "${REMOTE}/$OLD" || echo "        ! 删除失败"
     done
   else
-    echo "    当前备份数：$BACKUP_COUNT，无需清理"
+    echo "    无需清理（当前共 $COUNT 个）"
   fi
 done
 
-# —— 8. 删除本地最终备份文件 ——
-echo "  - 删除本地 ${FINAL_ZIP}"
-rm -f "${FINAL_ZIP}"
+# 7. 删除本地最终备份
+echo "  - 删除本地 ${FINAL_TAR}"
+rm -f "${FINAL_TAR}"
 
-# —— 完成 ——
 echo "[$(date '+%F %T')] 备份完成！"
