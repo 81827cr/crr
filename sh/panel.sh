@@ -224,6 +224,7 @@ function show_help() {
   echo -e "  设置虚拟内存 Swap     ${CYAN}p swap${NC}"
   echo -e "  修改 DNS 配置         ${CYAN}p dns${NC}"
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
+  echo
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
   echo -e "  备份                  ${CYAN}p backup${NC}"
