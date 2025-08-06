@@ -36,7 +36,7 @@ fi
 
 NOW=$(date +"%Y%m%d%H%M")
 FINAL_TAR="${BACKUP_PREFIX}-${NOW}.tar.gz"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$HOME"
 cd "${SCRIPT_DIR}"
 
 echo "[$(date '+%F %T')] 开始备份：${FINAL_TAR}"
