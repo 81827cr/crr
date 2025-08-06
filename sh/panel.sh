@@ -91,7 +91,13 @@ function install_rclone() {
 
   # 2. 确保配置目录存在，并创建一个空的 rclone.conf
   mkdir -p ~/.config/rclone
-  touch ~/.config/rclone/rclone.conf
+  # 3. 如果配置文件不存在才创建一个空文件
+  if [ ! -f ~/.config/rclone/rclone.conf ]; then
+    touch ~/.config/rclone/rclone.conf
+    echo "已创建空的 rclone.conf 文件"
+  else
+    echo "已存在配置文件，未覆盖：~/.config/rclone/rclone.conf"
+  fi
 }
 
 # 安装 node
