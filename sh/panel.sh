@@ -226,8 +226,8 @@ function show_help() {
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
-  echo -e "  备份                 ${CYAN}p backup${NC}"
-  echo -e "  恢复                 ${CYAN}p recover${NC}"
+  echo -e "  备份                  ${CYAN}p backup${NC}"
+  echo -e "  恢复                  ${CYAN}p recover${NC}"
   echo
   exit 0
 }
