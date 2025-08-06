@@ -224,6 +224,10 @@ function show_help() {
   echo -e "  设置虚拟内存 Swap     ${CYAN}p swap${NC}"
   echo -e "  修改 DNS 配置         ${CYAN}p dns${NC}"
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
+  echo "------------------------"
+  echo -e "${CYAN}备份恢复${NC}"
+  echo -e "  备份              ${CYAN}p backup${NC}"
+  echo -e "  恢复              ${CYAN}p recover${NC}"
   echo
   exit 0
 }
@@ -232,19 +236,21 @@ function show_help() {
 if [[ $# -ge 1 ]]; then  
   cmd="$1"; shift  
   case "$cmd" in  
-    help)   show_help ;;  
-    frp)    set_frp ;;  
-    caddy)  setup_caddy ;;  
-    qb)     install_qb ;;  
-    rclone) install_rclone ;;  
-    xui)    install_xui ;;  
-    node)   install_node ;;  
-    warp)   install_warp ;;  
-    bbr)    enable_bbr ;;  
-    swap)   set_swap ;;
-    dns)    set_dns ;;
-    ssh)    set_ssh ;;
-    ok)     one_click_tune ;;
+    help)      show_help ;;  
+    frp)       set_frp ;;  
+    caddy)     setup_caddy ;;  
+    qb)        install_qb ;;  
+    rclone)    install_rclone ;;  
+    xui)       install_xui ;;  
+    node)      install_node ;;  
+    warp)      install_warp ;;  
+    bbr)       enable_bbr ;;  
+    swap)      set_swap ;;
+    dns)       set_dns ;;
+    ssh)       set_ssh ;;
+    backup)    backup ;;
+    recover)   recover ;;
+    ok)        one_click_tune ;;
     *)      echo -e "${RED}未知命令：${cmd}${NC}" ;;  
   esac  
   exit 0  
