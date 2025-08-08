@@ -200,7 +200,7 @@ function one_click_tune() {
 
   # 4. 哪吒面板配置文件修改
   echo -e "${CYAN}→ 正在修改 Nezha Agent 配置，防止面板远程执行命令（SSH 控制）${NC}"
-  echo -e "${YELLOW}  - 修改配置文件：/opt/nezha/agent/config.yml"
+  echo -e "${CYAN}  - 修改配置文件：/opt/nezha/agent/config.yml"
   echo -e "  - 设置以下选项为 true："
   echo -e "      disable_auto_update"
   echo -e "      disable_nat"
