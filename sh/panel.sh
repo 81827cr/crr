@@ -79,6 +79,7 @@ function backup()         { run_remote "https://raw.githubusercontent.com/81827c
 function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
 function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
 function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
+function nezha_config()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/nezha_config.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
 # ======================================================================================================================
 function install_xui()    { run_remote "https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh"; }
@@ -197,9 +198,21 @@ function one_click_tune() {
   echo -e "${CYAN}→ 安装默认常用软件包（全装）${NC}"
   printf "\n" | install_packages
 
-  # 4. DNS 优化（向 set_dns 传入“1”，表示国外 DNS）
+  # 4. 哪吒面板配置文件修改
+  echo -e "${CYAN}→ 正在修改 Nezha Agent 配置，防止面板远程执行命令（SSH 控制）${NC}"
+  echo -e "${YELLOW}  - 修改配置文件：/opt/nezha/agent/config.yml"
+  echo -e "  - 设置以下选项为 true："
+  echo -e "      disable_auto_update"
+  echo -e "      disable_nat"
+  echo -e "      disable_command_execute"
+  echo -e "  - 全程本地操作，无联网行为"
+  echo -e "  - 如果配置文件不存在，将跳过设置步骤${NC}"
+  nezha_config
+  
+  # 5. DNS 优化（向 set_dns 传入“1”，表示国外 DNS）
   echo -e "${CYAN}→ 优化 DNS（自动选择“1”）${NC}"
   printf "1\n" | set_dns
+
 
   # 恢复 pause_and_back
   eval "$orig_pause"
