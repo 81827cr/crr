@@ -82,8 +82,9 @@ function set_frp()        { run_remote "https://raw.githubusercontent.com/81827c
 function nezha_config()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/nezha_config.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
 # ======================================================================================================================
+function reinstall()      { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/reinstall.sh"; }
 function install_xui()    { run_remote "https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh"; }
-function install_warp() { wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh '[option]' '[lisence/url/token]'; }
+function install_warp()   { wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh '[option]' '[lisence/url/token]'; }
 
 # 安装 rclone
 function install_rclone() {
@@ -248,6 +249,7 @@ function show_help() {
   echo "------------------------"
   echo -e "  备份                  ${CYAN}p backup${NC}"
   echo -e "  恢复                  ${CYAN}p recover${NC}"
+  echo -e "  重装                  ${CYAN}p dd${NC}"
   echo
   exit 0
 }
@@ -270,6 +272,7 @@ if [[ $# -ge 1 ]]; then
     ssh)       set_ssh ;;
     backup)    backup ;;
     recover)   recover ;;
+    dd)        reinstall ;;
     ok)        one_click_tune ;;
     *)      echo -e "${RED}未知命令：${cmd}${NC}" ;;  
   esac  
@@ -286,6 +289,7 @@ function show_sys_settings() {
   echo "7.   端口转发                 8.   修改 DNS 配置"
   echo "------------------------"
   echo "9.   test 测试               10.  一键调优"
+  echo "11.  重装系统"
   echo "------------------------"
   read -p "请输入操作编号: " sub
   case $sub in
@@ -299,6 +303,7 @@ function show_sys_settings() {
     8) set_dns ;;
     9) test ;;
     10) one_click_tune ;;
+    11) reinstall ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
   esac
 }
