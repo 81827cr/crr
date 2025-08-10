@@ -337,6 +337,7 @@ function show_menu() {
   clear
   echo -e "${CYAN}Linux 管理控制面板${NC}"
   echo -e "${CYAN}输入${YELLOW}p${CYAN}可快速启动脚本${NC}"
+  echo -e "${CYAN}输入${YELLOW}p help${CYAN}查看快捷键${NC}"
   echo "------------------------"
   echo -e "${CYAN}1.${NC}  系统信息"
   echo -e "${CYAN}2.${NC}  系统清理"
