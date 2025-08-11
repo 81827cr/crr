@@ -120,24 +120,18 @@ prompt_ssh_port() {
 prompt_password() {
   while true; do
     printf "请输入密码 (--password)（不得为空，直接回车将退出）: "
-    read -r -s PASS
+    read -r PASS
     echo
     PASS="${PASS:-}"
     if [ -z "$PASS" ]; then
       echo "未输入密码，脚本退出。"
       exit 1
     fi
-    printf "请再次输入密码确认: "
-    read -r -s PASS2
-    echo
-    if [ "$PASS" != "$PASS2" ]; then
-      echo "两次输入的密码不一致，请重新输入。"
-      continue
-    fi
     PASSWORD="$PASS"
     break
   done
 }
+
 
 main() {
   download_reinstall_sh || exit 1
@@ -163,15 +157,15 @@ main() {
     prompt_password
   fi
 
-  echo
-  # 显示将要执行的命令（隐藏明文密码）
-  if [ -n "${VER:-}" ]; then
-    echo "将执行 (masked):"
-    echo "bash reinstall.sh \"$OS\" \"$VER\" --ssh-port $SSH_PORT --password ******"
-  else
-    echo "将执行 (masked):"
-    echo "bash reinstall.sh \"$OS\" --ssh-port $SSH_PORT --password ******"
-  fi
+echo
+# 显示将要执行的命令（明文显示密码）
+if [ -n "${VER:-}" ]; then
+  echo "将执行:"
+  echo "bash reinstall.sh \"$OS\" \"$VER\" --ssh-port $SSH_PORT --password $PASSWORD"
+else
+  echo "将执行:"
+  echo "bash reinstall.sh \"$OS\" --ssh-port $SSH_PORT --password $PASSWORD"
+fi
 
   printf "确认执行？(y/N): "
   read -r confirm
