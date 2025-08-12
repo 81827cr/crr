@@ -11,6 +11,12 @@ OPENRC_INIT_PATH="/etc/init.d/${SERVICE_NAME}"
 TMP_DIR="/tmp/xray_install_$$"
 # ----------------------------------------------------
 
+# 通用远程脚本执行函数：下载并执行，然后返回菜单
+run_remote() {
+  bash <(curl -fsSL "$1")
+  pause_and_back
+}
+
 # 检测 init 系统：返回 systemd / openrc / unknown
 detect_init_system() {
   if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
@@ -177,6 +183,9 @@ uninstall_xray() {
   echo "卸载完成。"
 }
 
+function reality()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/xray/reality.sh"; }
+
+
 # --------- 交互面板 ---------
 # 必须以 root 运行（写 /opt 和 /etc）
 if [ "$EUID" -ne 0 ]; then
@@ -187,7 +196,8 @@ fi
 cat <<'EOF'
 请选择操作：
 1) 安装 xray
-2) 卸载 xray
+2) 生成 reality
+9) 卸载 xray
 0) 退出
 EOF
 
@@ -198,12 +208,9 @@ if [ -z "${choice:-}" ]; then
 fi
 
 case "$choice" in
-  1)
-    install_xray
-    ;;
-  2)
-    uninstall_xray
-    ;;
+  1) install_xray ;;
+  2) reality ;;
+  9) uninstall_xray ;;
   0)
     echo "退出。" && exit 0
     ;;

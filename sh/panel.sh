@@ -80,9 +80,9 @@ function recover()        { run_remote "https://raw.githubusercontent.com/81827c
 function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
 function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
 function nezha_config()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/nezha_config.sh"; }
-function install_xray()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_xray.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
 # ======================================================================================================================
+function install_xray()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/xray/install_xray.sh"; }
 function reinstall()      { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/reinstall.sh"; }
 function install_xui()    { run_remote "https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh"; }
 function install_warp()   { wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh '[option]' '[lisence/url/token]'; }
