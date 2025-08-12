@@ -59,7 +59,7 @@ auth.token = "$TOKEN"
 EOF
 
   echo
-  echo "请选择保活方式：1) PM2    2) systemd"
+  echo "请选择保活方式：1) PM2    2) systemd    3) openrc"
   read -p "> " opt
   case "$opt" in
     1)
@@ -90,6 +90,9 @@ EOF
       systemctl enable frps
       systemctl restart frps
       ;;
+    3)
+      install_frps_openrc
+      ;;
     *)
       echo "无效选项，已取消。"; return
       ;;
@@ -105,6 +108,40 @@ auth.token = "$TOKEN"
 EOF
   echo
 }
+
+# 极简：用 OpenRC + wrapper 做保活（不产生日志，输出重定向到 /dev/null）
+function install_frps_openrc() {
+  frp_base            # 确保 $HOME/frp 存在
+
+  WRAPPER=/usr/local/bin/frps-supervisor.sh
+
+  # 写 wrapper（不写日志）
+  cat > "$WRAPPER" <<'EOF'
+#!/bin/sh
+# 简单重启循环：frps 退出后 5s 重启，且不产生日志
+while true; do
+  "$HOME"/frp/frps -c "$HOME"/frp/frps.toml >/dev/null 2>&1
+  sleep 5
+done
+EOF
+  chmod +x "$WRAPPER"
+
+  # 极简 OpenRC 脚本（只要能启动 wrapper 即可）
+  cat > /etc/init.d/frps <<'EOF'
+#!/sbin/openrc-run
+command="/usr/local/bin/frps-supervisor.sh"
+command_user="root"
+depend() { need net }
+EOF
+  chmod +x /etc/init.d/frps
+
+  # 加开机并启动
+  rc-update add frps default
+  rc-service frps start
+
+  echo "✅ frps 已用 OpenRC（无日志模式）部署并启动"
+}
+
 
 # —— 功能 2：管理 & 追加 frpc —— #
 function manage_frpc() {
@@ -188,14 +225,20 @@ function uninstall_frp() {
   echo ">> 停止并删除 PM2 进程"
   pm2 delete frps >/dev/null 2>&1 || true
   pm2 delete frpc >/dev/null 2>&1 || true
+
+  echo ">> 删除 frp 目录"
+  rm -rf ~/frp
+
   echo ">> 停止并移除 systemd 服务"
   systemctl stop frps.service frpc.service >/dev/null 2>&1 || true
   systemctl disable frps.service frpc.service >/dev/null 2>&1 || true
   rm -f /etc/systemd/system/frps.service /etc/systemd/system/frpc.service
   systemctl daemon-reload
 
-  echo ">> 删除 frp 目录"
-  rm -rf ~/frp
+  echo ">> 停止并移除 OpenRC 服务 与 wrapper"
+  rc-service frps stop >/dev/null 2>&1 || true
+  rc-update del frps default >/dev/null 2>&1 || true
+  rm -f /etc/init.d/frps /usr/local/bin/frps-supervisor.sh
 
   echo ">> 更新 PM2 启动项并保存"
   pm2 startup >/dev/null 2>&1 || true
