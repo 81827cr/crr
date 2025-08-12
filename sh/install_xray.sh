@@ -189,7 +189,6 @@ cat <<'EOF'
 1) 安装 xray
 2) 卸载 xray
 0) 退出
-（直接回车也退出）
 EOF
 
 read -rp "输入选项: " choice

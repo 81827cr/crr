@@ -1,6 +1,22 @@
 #!/bin/bash
 set -e
 
+# 检测 init 系统：返回 "systemd" / "openrc" / "unknown"
+detect_init_system() {
+  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    echo "systemd"
+    return
+  fi
+  if command -v rc-service >/dev/null 2>&1 || [ -f /sbin/openrc-run ]; then
+    echo "openrc"
+    return
+  fi
+  echo "unknown"
+}
+
+# 缓存 init 系统类型，后面根据它决定是否允许 systemd/openrc 分支执行
+init_sys=$(detect_init_system)
+
 # —— 公共基础函数 —— #
 # 下载并解压到 ~/frp，并生成全局的 PORT/TOKEN 变量
 function frp_base() {
@@ -72,6 +88,12 @@ EOF
       pm2 save
       ;;
     2)
+      # 在执行 systemd 分支前检查系统是否支持 systemd
+      if [ "$init_sys" != "systemd" ]; then
+        echo "当前系统未检测到 systemd，无法使用 systemd 方式保活。若你是在 Alpine，请选择 openrc；在 Debian/Ubuntu 上请选择 systemd。"
+        return
+      fi
+
       cat > /etc/systemd/system/frps.service <<EOF
 [Unit]
 Description=frps Daemon Service
@@ -91,6 +113,12 @@ EOF
       systemctl restart frps
       ;;
     3)
+      # 在执行 openrc 分支前检查系统是否支持 openrc
+      if [ "$init_sys" != "openrc" ]; then
+        echo "当前系统未检测到 OpenRC（openrc），无法使用 openrc 方式保活。若你是在 Debian/Ubuntu，请选择 systemd；在 Alpine 上请选择 openrc。"
+        return
+      fi
+
       # OpenRC 保活
       install_openrc_frps
       ;;
@@ -108,19 +136,6 @@ auth.method = "token"
 auth.token = "$TOKEN"
 EOF
   echo
-}
-
-# 检测 init 系统：返回 "systemd" / "openrc" / "unknown"
-detect_init_system() {
-  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
-    echo "systemd"
-    return
-  fi
-  if command -v rc-service >/dev/null 2>&1 || [ -f /sbin/openrc-run ]; then
-    echo "openrc"
-    return
-  fi
-  echo "unknown"
 }
 
 # 安装 OpenRC init 脚本（frps），使用运行脚本时的 $HOME 路径（展开为绝对路径）
@@ -247,7 +262,6 @@ function uninstall_frp() {
   pm2 delete frps >/dev/null 2>&1 || true
   pm2 delete frpc >/dev/null 2>&1 || true
 
-  init_sys=$(detect_init_system)
   echo "检测到 init 系统: $init_sys"
 
   if [ "$init_sys" = "systemd" ]; then
