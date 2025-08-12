@@ -80,6 +80,7 @@ function recover()        { run_remote "https://raw.githubusercontent.com/81827c
 function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
 function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
 function nezha_config()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/nezha_config.sh"; }
+function install_xray()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_xray.sh"; }
 function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
 # ======================================================================================================================
 function reinstall()      { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/reinstall.sh"; }
@@ -234,6 +235,7 @@ function show_help() {
   echo -e "  安装 rclone           ${CYAN}p rclone${NC}"
   echo -e "  caddy 反代            ${CYAN}p caddy${NC}"
   echo -e "  安装 node             ${CYAN}p node${NC}"
+  echo -e "  安装 xray             ${CYAN}p xray${NC}"
   echo -e "  安装 3x-ui            ${CYAN}p xui${NC}"
   echo -e "  安装 warp             ${CYAN}p warp${NC}"
   echo
@@ -263,6 +265,7 @@ if [[ $# -ge 1 ]]; then
     caddy)     setup_caddy ;;  
     qb)        install_qb ;;  
     rclone)    install_rclone ;;  
+    xray)      install_xray ;;  
     xui)       install_xui ;;  
     node)      install_node ;;  
     warp)      install_warp ;;  
@@ -314,7 +317,7 @@ function show_software_mgmt() {
   echo "------------------------"
   echo "1.   安装 qBittorrent       2.   frp 管理"
   echo "3.   安装 rclone            4.   caddy 反代"
-  echo "5.   安装 node"             
+  echo "5.   安装 node              6.   安装 xray"             
   echo "------------------------"
   echo "11.  安装 3x-ui             12.  安装 warp"
   echo "------------------------"
@@ -325,6 +328,7 @@ function show_software_mgmt() {
     3) install_rclone ;;
     4) setup_caddy ;;
     5) install_node ;;
+    6) install_xray ;;
     11) install_xui ;;
     12) install_warp ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;

@@ -59,7 +59,7 @@ auth.token = "$TOKEN"
 EOF
 
   echo
-  echo "请选择保活方式：1) PM2    2) systemd"
+  echo "请选择保活方式：1) PM2    2) systemd    3) openrc"
   read -p "> " opt
   case "$opt" in
     1)
@@ -90,6 +90,10 @@ EOF
       systemctl enable frps
       systemctl restart frps
       ;;
+    3)
+      # OpenRC 保活
+      install_openrc_frps
+      ;;
     *)
       echo "无效选项，已取消。"; return
       ;;
@@ -105,6 +109,60 @@ auth.token = "$TOKEN"
 EOF
   echo
 }
+
+# 检测 init 系统：返回 "systemd" / "openrc" / "unknown"
+detect_init_system() {
+  if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+    echo "systemd"
+    return
+  fi
+  if command -v rc-service >/dev/null 2>&1 || [ -f /sbin/openrc-run ]; then
+    echo "openrc"
+    return
+  fi
+  echo "unknown"
+}
+
+# 安装 OpenRC init 脚本（frps），使用运行脚本时的 $HOME 路径（展开为绝对路径）
+install_openrc_frps() {
+  # 在脚本顶部或函数开头定义安装目录（统一使用此变量）
+  FRP_DIR="${HOME}/frp"    # <- 保证这里是你想要的目录，脚本以哪个用户运行，$HOME 就对应哪个用户
+
+  cat > /etc/init.d/frps <<EOF
+#!/sbin/openrc-run
+# OpenRC init 脚本：frps（使用 command_background）
+name="frps"
+description="frps Daemon"
+
+command="${FRP_DIR}/frps"
+command_args="-c ${FRP_DIR}/frps.toml"
+pidfile="/var/run/\${name}.pid"
+command_background="yes"
+
+depend() {
+  need net
+  after firewall
+}
+
+start_pre() {
+  if [ ! -f "${FRP_DIR}/frps" ]; then
+    eerror "frps binary not found: ${FRP_DIR}/frps"
+    return 1
+  fi
+  if [ ! -f "${FRP_DIR}/frps.toml" ]; then
+    eerror "frps config not found: ${FRP_DIR}/frps.toml"
+    return 1
+  fi
+}
+EOF
+
+  chmod +x /etc/init.d/frps || true
+  # 加入默认 runlevel 并启动（如果 rc-update/rc-service 可用）
+  command -v rc-update >/dev/null 2>&1 && rc-update add frps default || true
+  command -v rc-service >/dev/null 2>&1 && rc-service frps start || true
+}
+
+
 
 # —— 功能 2：管理 & 追加 frpc —— #
 function manage_frpc() {
@@ -188,11 +246,23 @@ function uninstall_frp() {
   echo ">> 停止并删除 PM2 进程"
   pm2 delete frps >/dev/null 2>&1 || true
   pm2 delete frpc >/dev/null 2>&1 || true
-  echo ">> 停止并移除 systemd 服务"
-  systemctl stop frps.service frpc.service >/dev/null 2>&1 || true
-  systemctl disable frps.service frpc.service >/dev/null 2>&1 || true
-  rm -f /etc/systemd/system/frps.service /etc/systemd/system/frpc.service
-  systemctl daemon-reload
+
+  init_sys=$(detect_init_system)
+  echo "检测到 init 系统: $init_sys"
+
+  if [ "$init_sys" = "systemd" ]; then
+    echo ">> 停止并移除 systemd 服务"
+    systemctl stop frps.service frpc.service >/dev/null 2>&1 || true
+    systemctl disable frps.service frpc.service >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/frps.service /etc/systemd/system/frpc.service
+    systemctl daemon-reload
+
+  elif [ "$init_sys" = "openrc" ]; then
+    echo ">> 停止并移除 OpenRC 服务"
+    command -v rc-service >/dev/null 2>&1 && rc-service frps stop >/dev/null 2>&1 || true
+    command -v rc-update >/dev/null 2>&1 && rc-update del frps default >/dev/null 2>&1 || true
+    [ -f /etc/init.d/frps ] && rm -f /etc/init.d/frps
+  fi
 
   echo ">> 删除 frp 目录"
   rm -rf ~/frp
@@ -203,6 +273,7 @@ function uninstall_frp() {
 
   echo -e "\n✅ frp 已彻底卸载完成！\n"
 }
+
 
 # —— 菜单入口 —— #
 function show_menu() {
