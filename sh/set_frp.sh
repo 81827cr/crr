@@ -228,7 +228,4 @@ function show_menu() {
   esac
 }
 
-
-while true; do
-  show_menu
-done
+show_menu
