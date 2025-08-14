@@ -105,10 +105,10 @@ enable_bbr() {
     sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
 
-    echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+    echo "net.core.default_qdisc=cake" >> /etc/sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
 
-    sysctl -w net.core.default_qdisc=fq
+    sysctl -w net.core.default_qdisc=cake
     sysctl -w net.ipv4.tcp_congestion_control=bbr
 
     sysctl -p
