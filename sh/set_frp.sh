@@ -129,8 +129,9 @@ EOF
 
   echo -e "\n✅ frps 安装并启动完成！bindPort=$PORT  token=$TOKEN\n"
   echo "—— frpc 客户端示例 ——"
+  SERVER_IP=$(curl -4 -s ip.sb || echo "YOUR_FRPS_SERVER_IP")
   cat <<EOF
-serverAddr = "YOUR_FRPS_SERVER_IP"
+serverAddr = "$SERVER_IP"
 serverPort = $PORT
 auth.method = "token"
 auth.token = "$TOKEN"
