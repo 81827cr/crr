@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-### 恢复脚本：restore_vkvm_tar.sh ###
+### 恢复脚本：restore_hk_tar.sh ###
 # 用途：从 rclone 远端下载并恢复 vps 备份（tar 归档）
 
-# 定义脚本所在目录，用于后续路径引用
-declare SCRIPT_DIR
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 1. 检查 rclone 是否安装
 if ! command -v rclone >/dev/null 2>&1; then
@@ -52,17 +49,17 @@ select BACKUP_TAR in "${BACKUP_FILES[@]}"; do
   fi
 done
 
-# 4. 下载备份文件到临时目录
-mkdir -p "${SCRIPT_DIR}/tmp"
-echo "下载 ${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR} 到 tmp/"
-rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR}" "${SCRIPT_DIR}/tmp/"
+# 4. 下载备份文件到临时目录（固定在 /tmp）
+DOWNLOAD_DIR="/tmp/restore_tmp"
+mkdir -p "${DOWNLOAD_DIR}"
+echo "下载 ${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR} 到 ${DOWNLOAD_DIR}/"
+rclone copy "${REMOTE}:${REMOTE_PATH}/${BACKUP_TAR}" "${DOWNLOAD_DIR}/"
 
 # 5. 交互式恢复
-downloaded="${SCRIPT_DIR}/tmp/${BACKUP_TAR}"
-cd "${SCRIPT_DIR}/tmp" || exit
+cd "${DOWNLOAD_DIR}" || exit
 
 # 解压总包（假设为 tar.gz 或 tar）
-echo "解压 ${BACKUP_TAR} → tmp/"
+echo "解压 ${BACKUP_TAR} → ${DOWNLOAD_DIR}/"
 # 支持 .tar.gz 或 .tar
 if [[ "$BACKUP_TAR" =~ \.(tar\.gz|tgz)$ ]]; then
   tar -xzvf "$BACKUP_TAR"
@@ -76,18 +73,18 @@ fi
 # 5.1 是否恢复 /root 目录
 read -rp "是否恢复 /root 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  echo "解压 root.tar.gz → tmp/"
+  echo "解压 root.tar.gz →  ${DOWNLOAD_DIR}/"
   tar -xzvf root.tar.gz || tar -xvf root.tar
-  echo "覆盖 tmp/root/ 到 /root/"
+  echo "覆盖 ${DOWNLOAD_DIR}/root/ 到 /root/"
   cp -a root/. /root/
 fi
 
 # 5.2 是否恢复 /home 目录
 read -rp "是否恢复 /home 目录？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  echo "解压 home.tar.gz → tmp/"
+  echo "解压 home.tar.gz → ${DOWNLOAD_DIR}/"
   tar -xzvf home.tar.gz || tar -xvf home.tar
-  echo "覆盖 tmp/home/ 到 /home/"
+  echo "覆盖 ${DOWNLOAD_DIR}/home/ 到 /home/"
   cp -a home/. /home/
 fi
 
@@ -130,15 +127,15 @@ read -rp "是否覆盖当前服务器的 crontab？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
   echo "  - 清空当前 crontab 任务"
   crontab -r || true
-  echo "  - 导入 tmp/crontab.txt"
-  crontab "${SCRIPT_DIR}/tmp/crontab.txt"
+  echo "  - 导入 ${DOWNLOAD_DIR}/crontab.txt"
+  crontab "${DOWNLOAD_DIR}/crontab.txt"
 fi
 
 # 7. 删除临时目录 tmp
-read -rp "是否删除脚本目录下的 tmp？ [y/N]：" ans
+read -rp "是否删除脚本目录下的 ${DOWNLOAD_DIR}？ [y/N]：" ans
 if [[ "${ans,,}" == y* ]]; then
-  echo "删除临时目录 ${SCRIPT_DIR}/tmp"
-  rm -rf "${SCRIPT_DIR}/tmp"
+  echo "删除临时目录 ${DOWNLOAD_DIR}"
+  rm -rf "${DOWNLOAD_DIR}"
 fi
 
 echo "所有操作结束！"
