@@ -37,12 +37,12 @@ function pause_and_back() {
 
 function install_packages() {
   echo -e "${BLUE}默认安装的包如下：${NC}"
-  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron sudo ufw${NC}"
+  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq iperf3 zip vim screen git net-tools cron sudo ufw${NC}"
   echo -ne "${YELLOW}请输入你不想安装的包（用空格分隔，可留空）：${NC}"
   read exclude
 
   EXCLUDE_ARRAY=($exclude)
-  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq zip vim screen git net-tools cron sudo ufw)
+  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq iperf3 zip vim screen git net-tools cron sudo ufw)
 
   INSTALL_LIST=()
   for pkg in "${ALL_PACKAGES[@]}"; do
