@@ -28,8 +28,8 @@ function frp_base() {
 
   cd "$HOME"
   wget -q https://a.dps.dpdns.org/app/frp_0.64.0_linux_amd64.tar.gz
-  tar -zxf frp_0.63.0_linux_amd64.tar.gz && rm frp_0.63.0_linux_amd64.tar.gz
-  mv frp_0.63.0_linux_amd64/ frp/
+  tar -zxf frp_0.64.0_linux_amd64.tar.gz && rm frp_0.64.0_linux_amd64.tar.gz
+  mv frp_0.64.0_linux_amd64/ frp/
   cd frp/
 }
 
