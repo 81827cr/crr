@@ -67,23 +67,23 @@ function set_timezone() {
   pause_and_back
 }
 
-function set_ssh()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_ssh.sh"; }
-function linux_clean()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_clean.sh"; }
-function set_swap()       { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_swap.sh"; }
-function enable_bbr()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/enable_bbr.sh"; }
-function security_check() { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_security_check.sh"; }
-function port_forward()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/port_forward.sh"; }
-function setup_caddy()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/setup_caddy.sh"; }
-function set_dns()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_dns.sh"; }
-function backup()         { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/backup.sh"; }
-function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
-function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
-function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
-function nezha_config()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/nezha_config.sh"; }
-function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
+function set_ssh()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_ssh.sh"; }
+function linux_clean()    { run_remote "https://a.dps.dpdns.org/crr/sh/linux_clean.sh"; }
+function set_swap()       { run_remote "https://a.dps.dpdns.org/crr/sh/set_swap.sh"; }
+function enable_bbr()     { run_remote "https://a.dps.dpdns.org/crr/sh/enable_bbr.sh"; }
+function security_check() { run_remote "https://a.dps.dpdns.org/crr/sh/linux_security_check.sh"; }
+function port_forward()   { run_remote "https://a.dps.dpdns.org/crr/sh/port_forward.sh"; }
+function setup_caddy()    { run_remote "https://a.dps.dpdns.org/crr/sh/setup_caddy.sh"; }
+function set_dns()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_dns.sh"; }
+function backup()         { run_remote "https://a.dps.dpdns.org/crr/sh/backup.sh"; }
+function recover()        { run_remote "https://a.dps.dpdns.org/crr/sh/recover.sh"; }
+function install_qb()     { run_remote "https://a.dps.dpdns.org/crr/sh/install_qb.sh"; }
+function set_frp()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_frp.sh"; }
+function nezha_config()   { run_remote "https://a.dps.dpdns.org/crr/sh/nezha_config.sh"; }
+function test()           { run_remote "https://a.dps.dpdns.org/crr/sh/test.sh"; }
 # ======================================================================================================================
-function install_xray()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/xray/install_xray.sh"; }
-function reinstall()      { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/reinstall.sh"; }
+function install_xray()   { run_remote "https://a.dps.dpdns.org/crr/sh/xray/install_xray.sh"; }
+function reinstall()      { run_remote "https://a.dps.dpdns.org/crr/sh/reinstall.sh"; }
 function install_xui()    { run_remote "https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh"; }
 function install_warp()   { wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh '[option]' '[lisence/url/token]'; }
 
