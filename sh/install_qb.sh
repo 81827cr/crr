@@ -2,7 +2,6 @@
 set -e
 
 SCRIPT_NAME="$(basename "$0")"
-IPV4=$(curl -4 -s ip.sb || echo "<你的服务器IP>")
 
 function ensure_root() {
     if [ "$(id -u)" -ne 0 ]; then
@@ -17,7 +16,7 @@ function install_static() {
     cd /opt
 
     # 下载并授权
-    wget -qO qb-static https://github.com/userdocs/qbittorrent-nox-static/releases/download/release-4.3.9_v1.2.15/x86_64-qbittorrent-nox
+    wget -qO qb-static https://a.dps.dpdns.org/app/x86_64-qbittorrent-nox
     chmod +x qb-static
 
     # 首次初始化：自动同意许可并启动，10 秒后杀掉
@@ -50,7 +49,7 @@ EOF
 
     echo
     echo "✅ 功能1 完成！"
-    echo "   Web UI: http://$IPV4:8080"
+    echo "   Web UI: http://<你的服务器IP>:8080"
     echo "   默认用户: admin"
     echo "   默认密码: adminadmin"
 }
@@ -89,7 +88,7 @@ EOF
 
     echo
     echo "✅ 功能2 完成！"
-    echo "   Web UI: http://$IPV4:8080"
+    echo "   Web UI: http://<你的服务器IP>:8080"
     echo "   默认用户: admin"
     echo "   默认密码: adminadmin"
 }

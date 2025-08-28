@@ -2,6 +2,7 @@
 set -e
 
 SCRIPT_NAME="$(basename "$0")"
+IPV4=$(curl -4 -s ip.sb || echo "<你的服务器IP>")
 
 function ensure_root() {
     if [ "$(id -u)" -ne 0 ]; then
@@ -49,7 +50,7 @@ EOF
 
     echo
     echo "✅ 功能1 完成！"
-    echo "   Web UI: http://<你的服务器IP>:8080"
+    echo "   Web UI: http://$IPV4:8080"
     echo "   默认用户: admin"
     echo "   默认密码: adminadmin"
 }
@@ -88,7 +89,7 @@ EOF
 
     echo
     echo "✅ 功能2 完成！"
-    echo "   Web UI: http://<你的服务器IP>:8080"
+    echo "   Web UI: http://$IPV4:8080"
     echo "   默认用户: admin"
     echo "   默认密码: adminadmin"
 }
