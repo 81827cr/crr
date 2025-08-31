@@ -246,6 +246,7 @@ function show_help() {
   echo -e "  设置虚拟内存 Swap     ${CYAN}p swap${NC}"
   echo -e "  修改 DNS 配置         ${CYAN}p dns${NC}"
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
+  echo -e "  端口转发              ${CYAN}p iptables${NC}"
   echo
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
@@ -269,6 +270,7 @@ if [[ $# -ge 1 ]]; then
     xui)       install_xui ;;  
     node)      install_node ;;  
     warp)      install_warp ;;  
+    iptables)  port_forward ;;
     bbr)       enable_bbr ;;  
     swap)      set_swap ;;
     dns)       set_dns ;;
