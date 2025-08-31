@@ -109,6 +109,8 @@ function uninstall_all() {
     # 清理静态二进制与配置
     rm -f /opt/qb-static
     rm -rf /root/.config/qBittorrent
+    rm -f ~/.local/share/qBittorrent
+    rm -rf ~/.cache/qBittorrent
 
     echo
     echo "✅ 功能3 完成，已彻底卸载并清理所有配置。"
