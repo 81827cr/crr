@@ -79,6 +79,7 @@ function backup()         { run_remote "https://a.dps.dpdns.org/crr/sh/backup.sh
 function recover()        { run_remote "https://a.dps.dpdns.org/crr/sh/recover.sh"; }
 function install_qb()     { run_remote "https://a.dps.dpdns.org/crr/sh/install_qb.sh"; }
 function set_frp()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_frp.sh"; }
+function install_aria2()  { run_remote "https://a.dps.dpdns.org/crr/sh/install_aria2.sh"; }
 function nezha_config()   { run_remote "https://a.dps.dpdns.org/crr/sh/nezha_config.sh"; }
 function test()           { run_remote "https://a.dps.dpdns.org/crr/sh/test.sh"; }
 # ======================================================================================================================
@@ -237,6 +238,7 @@ function show_help() {
   echo -e "  安装 node             ${CYAN}p node${NC}"
   echo -e "  安装 xray             ${CYAN}p xray${NC}"
   echo -e "  安装 3x-ui            ${CYAN}p xui${NC}"
+  echo -e "  安装 aria2            ${CYAN}p aria2${NC}"
   echo -e "  安装 warp             ${CYAN}p warp${NC}"
   echo
   echo -e "${CYAN}系统管理${NC}"
@@ -268,6 +270,7 @@ if [[ $# -ge 1 ]]; then
     rclone)    install_rclone ;;  
     xray)      install_xray ;;  
     xui)       install_xui ;;  
+    aria2)     install_aria2 ;;  
     node)      install_node ;;  
     warp)      install_warp ;;  
     iptables)  port_forward ;;
@@ -320,6 +323,7 @@ function show_software_mgmt() {
   echo "1.   安装 qBittorrent       2.   frp 管理"
   echo "3.   安装 rclone            4.   caddy 反代"
   echo "5.   安装 node              6.   安装 xray"             
+  echo "7.   安装 aria2"             
   echo "------------------------"
   echo "11.  安装 3x-ui             12.  安装 warp"
   echo "------------------------"
@@ -331,6 +335,7 @@ function show_software_mgmt() {
     4) setup_caddy ;;
     5) install_node ;;
     6) install_xray ;;
+    7) install_aria2 ;;
     11) install_xui ;;
     12) install_warp ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
