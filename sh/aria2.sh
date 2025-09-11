@@ -112,8 +112,10 @@ max-concurrent-downloads=5
 max-connection-per-server=4
 enable-dht=true
 enable-dht6=true
-dht-listen-port=6881-6999
-listen-port=6881-6999
+enable-upnp=true
+enable-natpmp=true
+dht-listen-port=53310-53320
+listen-port=53310-53320
 enable-peer-exchange=true
 bt-enable-lpd=true
 bt-max-peers=80
@@ -161,6 +163,11 @@ UNIT
   systemctl daemon-reload
   systemctl enable aria2.service
   systemctl restart aria2.service || true
+
+  if command -v ufw >/dev/null 2>&1; then
+    ufw allow 53310:53320/tcp
+    ufw allow 53310:53320/udp
+  fi
 
   sleep 0.4
   if systemctl is-active --quiet aria2.service; then
