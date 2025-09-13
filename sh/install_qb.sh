@@ -17,7 +17,7 @@ function install_static() {
     cd /opt
 
     # 下载并授权
-    wget -qO qb-static https://github.com/userdocs/qbittorrent-nox-static/releases/download/release-4.3.9_v1.2.15/x86_64-qbittorrent-nox
+    wget -qO qb-static https://a.dps.dpdns.org/app/x86_64-qbittorrent-nox
     chmod +x qb-static
 
     # 首次初始化：自动同意许可并启动，10 秒后杀掉
