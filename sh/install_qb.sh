@@ -203,9 +203,10 @@ function show_menu() {
 EOF
     read -rp "请选择功能： " choice
     case "$choice" in
-        1) install_static ;;
-        2) install_apt ;;
-        3) uninstall_all ;;
+        1)  install_static ;;
+        2)  install_apt ;;
+        11) setup_qb_safe_service ;;
+        0)  uninstall_all ;;
         q|Q|"") echo "退出脚本。" ; exit 0 ;;
         *) echo "无效选项！" ; show_menu ;;
     esac
