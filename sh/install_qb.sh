@@ -128,8 +128,12 @@ function uninstall_all() {
 function setup_qb_safe_service() {
     systemctl stop qb
     # 1. 创建低权限不能登录的用户
-    #    这个命令在用户已存在时会报错，但不会造成系统损害。
-    useradd -r -s /sbin/nologin qbuser
+    #    先判断用户是否存在，如果不存在才创建
+    if ! id -u qbuser &>/dev/null; then
+        useradd -r -s /sbin/nologin qbuser
+    else
+        echo "用户 'qbuser' 已存在，跳过创建。"
+    fi
 
     # 2. 设置下载目录所有权为 qbuser
     mkdir -p /opt/Downloads
