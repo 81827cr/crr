@@ -132,6 +132,7 @@ function setup_qb_safe_service() {
     useradd -r -s /sbin/nologin qbuser
 
     # 2. 设置下载目录所有权为 qbuser
+    mkdir -p /opt/Downloads
     chown -R qbuser:qbuser /opt/Downloads
     chmod -R 750 /opt/Downloads
 
