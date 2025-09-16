@@ -192,8 +192,6 @@ EOF
     echo "所有配置已完成，请使用 'systemctl status qb' 命令检查服务状态。"
 }
 
-
-
 function show_menu() {
     cat <<-EOF
 ===========================
