@@ -37,12 +37,12 @@ function pause_and_back() {
 
 function install_packages() {
   echo -e "${BLUE}默认安装的包如下：${NC}"
-  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq iperf3 zip vim screen git net-tools cron sudo ufw${NC}"
+  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq fuse3 iperf3 zip vim screen git net-tools cron sudo ufw${NC}"
   echo -ne "${YELLOW}请输入你不想安装的包（用空格分隔，可留空）：${NC}"
   read exclude
 
   EXCLUDE_ARRAY=($exclude)
-  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq iperf3 zip vim screen git net-tools cron sudo ufw)
+  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq fuse3 iperf3 zip vim screen git net-tools cron sudo ufw)
 
   INSTALL_LIST=()
   for pkg in "${ALL_PACKAGES[@]}"; do
@@ -67,23 +67,24 @@ function set_timezone() {
   pause_and_back
 }
 
-function set_ssh()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_ssh.sh"; }
-function linux_clean()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_clean.sh"; }
-function set_swap()       { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_swap.sh"; }
-function enable_bbr()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/enable_bbr.sh"; }
-function security_check() { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/linux_security_check.sh"; }
-function port_forward()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/port_forward.sh"; }
-function setup_caddy()    { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/setup_caddy.sh"; }
-function set_dns()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_dns.sh"; }
-function backup()         { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/backup.sh"; }
-function recover()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/recover.sh"; }
-function install_qb()     { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/install_qb.sh"; }
-function set_frp()        { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/set_frp.sh"; }
-function nezha_config()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/nezha_config.sh"; }
-function test()           { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/test.sh"; }
+function set_ssh()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_ssh.sh"; }
+function linux_clean()    { run_remote "https://a.dps.dpdns.org/crr/sh/linux_clean.sh"; }
+function set_swap()       { run_remote "https://a.dps.dpdns.org/crr/sh/set_swap.sh"; }
+function enable_bbr()     { run_remote "https://a.dps.dpdns.org/crr/sh/enable_bbr.sh"; }
+function security_check() { run_remote "https://a.dps.dpdns.org/crr/sh/linux_security_check.sh"; }
+function port_forward()   { run_remote "https://a.dps.dpdns.org/crr/sh/port_forward.sh"; }
+function setup_caddy()    { run_remote "https://a.dps.dpdns.org/crr/sh/setup_caddy.sh"; }
+function set_dns()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_dns.sh"; }
+function backup()         { run_remote "https://a.dps.dpdns.org/crr/sh/backup.sh"; }
+function recover()        { run_remote "https://a.dps.dpdns.org/crr/sh/recover.sh"; }
+function install_qb()     { run_remote "https://a.dps.dpdns.org/crr/sh/install_qb.sh"; }
+function set_frp()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_frp.sh"; }
+function install_aria2()  { run_remote "https://a.dps.dpdns.org/crr/sh/install_aria2.sh"; }
+function nezha_config()   { run_remote "https://a.dps.dpdns.org/crr/sh/nezha_config.sh"; }
+function test()           { run_remote "https://a.dps.dpdns.org/crr/sh/test.sh"; }
 # ======================================================================================================================
-function install_xray()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/xray/install_xray.sh"; }
-function reinstall()      { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/reinstall.sh"; }
+function install_xray()   { run_remote "https://a.dps.dpdns.org/crr/sh/xray/install_xray.sh"; }
+function reinstall()      { run_remote "https://a.dps.dpdns.org/crr/sh/reinstall.sh"; }
 function install_xui()    { run_remote "https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh"; }
 function install_warp()   { wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && bash menu.sh '[option]' '[lisence/url/token]'; }
 
@@ -237,6 +238,7 @@ function show_help() {
   echo -e "  安装 node             ${CYAN}p node${NC}"
   echo -e "  安装 xray             ${CYAN}p xray${NC}"
   echo -e "  安装 3x-ui            ${CYAN}p xui${NC}"
+  echo -e "  安装 aria2            ${CYAN}p aria2${NC}"
   echo -e "  安装 warp             ${CYAN}p warp${NC}"
   echo
   echo -e "${CYAN}系统管理${NC}"
@@ -246,6 +248,7 @@ function show_help() {
   echo -e "  设置虚拟内存 Swap     ${CYAN}p swap${NC}"
   echo -e "  修改 DNS 配置         ${CYAN}p dns${NC}"
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
+  echo -e "  端口转发              ${CYAN}p iptables${NC}"
   echo
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
@@ -267,8 +270,10 @@ if [[ $# -ge 1 ]]; then
     rclone)    install_rclone ;;  
     xray)      install_xray ;;  
     xui)       install_xui ;;  
+    aria2)     install_aria2 ;;  
     node)      install_node ;;  
     warp)      install_warp ;;  
+    iptables)  port_forward ;;
     bbr)       enable_bbr ;;  
     swap)      set_swap ;;
     dns)       set_dns ;;
@@ -318,6 +323,7 @@ function show_software_mgmt() {
   echo "1.   安装 qBittorrent       2.   frp 管理"
   echo "3.   安装 rclone            4.   caddy 反代"
   echo "5.   安装 node              6.   安装 xray"             
+  echo "7.   安装 aria2"             
   echo "------------------------"
   echo "11.  安装 3x-ui             12.  安装 warp"
   echo "------------------------"
@@ -329,6 +335,7 @@ function show_software_mgmt() {
     4) setup_caddy ;;
     5) install_node ;;
     6) install_xray ;;
+    7) install_aria2 ;;
     11) install_xui ;;
     12) install_warp ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;

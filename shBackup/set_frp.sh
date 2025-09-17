@@ -27,9 +27,9 @@ function frp_base() {
   fi
 
   cd "$HOME"
-  wget -q https://github.com/fatedier/frp/releases/download/v0.63.0/frp_0.63.0_linux_amd64.tar.gz
-  tar -zxf frp_0.63.0_linux_amd64.tar.gz && rm frp_0.63.0_linux_amd64.tar.gz
-  mv frp_0.63.0_linux_amd64/ frp/
+  wget -q https://a.dps.dpdns.org/app/frp_0.64.0_linux_amd64.tar.gz
+  tar -zxf frp_0.64.0_linux_amd64.tar.gz && rm frp_0.64.0_linux_amd64.tar.gz
+  mv frp_0.64.0_linux_amd64/ frp/
   cd frp/
 }
 

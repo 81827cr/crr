@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # --------- 配置区（把你给的链接放这里） ------------
-DOWNLOAD_URL="https://github.com/XTLS/Xray-core/releases/download/v25.8.3/Xray-linux-64.zip"
+DOWNLOAD_URL="https://a.dps.dpdns.org/app/Xray-linux-64.zip"
 XDIR="/opt/xray"
 SERVICE_NAME="xray"
 SYSTEMD_UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
@@ -183,7 +183,7 @@ uninstall_xray() {
   echo "卸载完成。"
 }
 
-function reality()   { run_remote "https://raw.githubusercontent.com/81827cr/crr/main/sh/xray/reality.sh"; }
+function reality()   { run_remote "https://a.dps.dpdns.org/crr/sh/xray/reality.sh"; }
 
 
 # --------- 交互面板 ---------
