@@ -104,13 +104,47 @@ function install_rclone() {
   fi
 }
 
-# 安装 node
+# 安装 node（极简版：内联检测加速站点是否可用）
 function install_node() {
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  local RAW="https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh"
+  local PROXY_PREFIX="https://do.v30.dpdns.org"
+  local CHECK_URL="$PROXY_PREFIX"
+  local code url
+
+  code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "$CHECK_URL" 2>/dev/null || echo "000")
+
+  if [ "$code" = "200" ]; then
+    url="${PROXY_PREFIX%/}/${RAW}"
+  else
+    url="$RAW"
+  fi
+
+  echo "使用安装地址：$url"
+  curl -o- "$url" | bash
   source ~/.bashrc
   nvm install node
   pause_and_back
 }
+
+# GB5 测试（运行 yet-another-bench-script）
+function test_gb5() {
+  local RAW="https://raw.githubusercontent.com/masonr/yet-another-bench-script/master/yabs.sh"
+  local PROXY_PREFIX="https://do.v30.dpdns.org"
+  local CHECK_URL="$PROXY_PREFIX"
+  local code url
+  code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "$CHECK_URL" 2>/dev/null || echo "000")
+
+  if [ "$code" = "200" ]; then
+    url="${PROXY_PREFIX%/}/${RAW}"
+  else
+    url="$RAW"
+  fi
+
+  echo "使用地址：$url"
+  curl -sL "$url" | bash -s -- -i5
+}
+
+
 
 
 function show_sysinfo() {
@@ -342,7 +376,17 @@ function show_software_mgmt() {
   esac
 }
 
-
+function test_server() {
+  clear
+  echo -e "测试脚本"
+  echo "------------------------"
+  echo "1.   GB5 测试"
+  read -p "请输入操作编号: " sub
+  case $sub in
+    1) test_gb5 ;;
+    *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
+  esac
+}
 
 function show_menu() {
   clear
@@ -353,9 +397,10 @@ function show_menu() {
   echo -e "${CYAN}2.${NC}  系统清理"
   echo -e "${CYAN}3.${NC}  系统设置"
   echo -e "${CYAN}4.${NC}  软件管理"
+  echo -e "${CYAN}5.${NC}  测试脚本"
   echo "------------------------"
-  echo -e "${CYAN}5.${NC}  备份vps"
-  echo -e "${CYAN}6.${NC}  还原vps"
+  echo -e "${CYAN}6.${NC}  备份vps"
+  echo -e "${CYAN}7.${NC}  还原vps"
   echo "------------------------"
   echo -e "${CYAN}0.${NC}  退出脚本"
   echo "------------------------"
@@ -367,8 +412,9 @@ function show_menu() {
     2) linux_clean ;;
     3) show_sys_settings ;;
     4) show_software_mgmt ;;
-    5) backup ;;
-    6) recover ;;
+    5) test_server ;;
+    6) backup ;;
+    7) recover ;;
     0) echo -e "${GREEN}退出成功，再见！${NC}" && exit 0 ;;
     *) echo -e "${RED}无效输入，脚本已退出！${NC}" && exit 1 ;;
   esac
