@@ -119,7 +119,7 @@ function install_node() {
     url="$RAW"
   fi
 
-  echo "使用安装地址：$url"
+  echo "使用地址：$url"
   curl -o- "$url" | bash
   source ~/.bashrc
   nvm install node
