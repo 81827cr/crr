@@ -82,6 +82,8 @@ function set_frp()        { run_remote "https://a.dps.dpdns.org/crr/sh/set_frp.s
 function install_aria2()  { run_remote "https://a.dps.dpdns.org/crr/sh/install_aria2.sh"; }
 function nezha_config()   { run_remote "https://a.dps.dpdns.org/crr/sh/nezha_config.sh"; }
 function test()           { run_remote "https://a.dps.dpdns.org/crr/sh/test.sh"; }
+function f2b_panel()      { run_remote "https://a.dps.dpdns.org/crr/sh/f2b_panel.sh"; }
+function net_stack()      { run_remote "https://a.dps.dpdns.org/crr/sh/net_stack.sh"; }
 # ======================================================================================================================
 function install_xray()   { run_remote "https://a.dps.dpdns.org/crr/sh/xray/install_xray.sh"; }
 function reinstall()      { run_remote "https://a.dps.dpdns.org/crr/sh/reinstall.sh"; }
@@ -274,6 +276,8 @@ function show_help() {
   echo -e "  安装 3x-ui            ${CYAN}p xui${NC}"
   echo -e "  安装 aria2            ${CYAN}p aria2${NC}"
   echo -e "  安装 warp             ${CYAN}p warp${NC}"
+  echo -e "  安装 f2b_panel        ${CYAN}p f2b${NC}"
+
   echo
   echo -e "${CYAN}系统管理${NC}"
   echo "------------------------"
@@ -283,6 +287,7 @@ function show_help() {
   echo -e "  修改 DNS 配置         ${CYAN}p dns${NC}"
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
   echo -e "  端口转发              ${CYAN}p iptables${NC}"
+  echo -e "  切换 ipv4/v6 优先级   ${CYAN}p v4${NC}"
   echo
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
@@ -312,6 +317,8 @@ if [[ $# -ge 1 ]]; then
     swap)      set_swap ;;
     dns)       set_dns ;;
     ssh)       set_ssh ;;
+    f2b)       f2b_panel ;;
+    v4)        net_stack ;;
     backup)    backup ;;
     recover)   recover ;;
     dd)        reinstall ;;
@@ -329,9 +336,10 @@ function show_sys_settings() {
   echo "3.   设置虚拟内存 Swap        4.   设置时区为 Asia/Shanghai"
   echo "5.   开启 BBR 加速            6.   运行安全检查脚本"
   echo "7.   端口转发                 8.   修改 DNS 配置"
+  echo "9.   切换 ipv4/v6 优先级"
   echo "------------------------"
-  echo "9.   test 测试               10.  一键调优"
-  echo "11.  重装系统"
+  echo "21.   test 测试               22.  一键调优"
+  echo "23.  重装系统"
   echo "------------------------"
   read -p "请输入操作编号: " sub
   case $sub in
@@ -343,9 +351,10 @@ function show_sys_settings() {
     6) security_check ;;
     7) port_forward ;;
     8) set_dns ;;
-    9) test ;;
-    10) one_click_tune ;;
-    11) reinstall ;;
+    9) net_stack ;;
+    21) test ;;
+    22) one_click_tune ;;
+    23) reinstall ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
   esac
 }
@@ -357,7 +366,7 @@ function show_software_mgmt() {
   echo "1.   安装 qBittorrent       2.   frp 管理"
   echo "3.   安装 rclone            4.   caddy 反代"
   echo "5.   安装 node              6.   安装 xray"             
-  echo "7.   安装 aria2"             
+  echo "7.   安装 aria2             8.   fail2ban 管理"             
   echo "------------------------"
   echo "11.  安装 3x-ui             12.  安装 warp"
   echo "------------------------"
@@ -370,6 +379,7 @@ function show_software_mgmt() {
     5) install_node ;;
     6) install_xray ;;
     7) install_aria2 ;;
+    8) f2b_panel ;;
     11) install_xui ;;
     12) install_warp ;;
     *) echo -e "${RED}无效输入，返回主菜单${NC}"; sleep 1; show_menu ;;
