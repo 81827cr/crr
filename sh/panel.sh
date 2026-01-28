@@ -109,7 +109,7 @@ function install_rclone() {
 # 安装 node（极简版：内联检测加速站点是否可用）
 function install_node() {
   local RAW="https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh"
-  local PROXY_PREFIX="https://do.v30.dpdns.org"
+  local PROXY_PREFIX="https://do.yddy.de"
   local CHECK_URL="$PROXY_PREFIX"
   local code url
 
@@ -131,7 +131,7 @@ function install_node() {
 # GB5 测试（运行 yet-another-bench-script）
 function test_gb5() {
   local RAW="https://raw.githubusercontent.com/masonr/yet-another-bench-script/master/yabs.sh"
-  local PROXY_PREFIX="https://do.v30.dpdns.org"
+  local PROXY_PREFIX="https://do.yddy.de"
   local CHECK_URL="$PROXY_PREFIX"
   local code url
   code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 3 "$CHECK_URL" 2>/dev/null || echo "000")
@@ -323,6 +323,7 @@ if [[ $# -ge 1 ]]; then
     recover)   recover ;;
     dd)        reinstall ;;
     ok)        one_click_tune ;;
+    gb5)       test_gb5 ;;
     *)      echo -e "${RED}未知命令：${cmd}${NC}" ;;  
   esac  
   exit 0  
