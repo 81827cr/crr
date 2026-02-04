@@ -6,8 +6,8 @@ set -euo pipefail
 MAX_BACKUPS=2
 
 # rclone 目标目录（路径尾部不要加斜杠）
-# PIKPAK_REMOTE="pikpak:vps/backup"
-# ONEDRIVE_REMOTE="onedrive:vps/backup"
+PIKPAK_REMOTE="pikpak:vps/backup"
+ONEDRIVE_REMOTE="onedrive:vps/backup"
 OSS_REMOTE="oss:apdd/vps/backup"
 S3_REMOTE="bing:dps666/vps/backup"
 
