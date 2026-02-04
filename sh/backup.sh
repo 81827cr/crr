@@ -5,11 +5,14 @@ set -euo pipefail
 # 最大保留备份数量（每个机器名前缀）
 MAX_BACKUPS=2
 
-# rclone 目标目录（路径尾部不要加斜杠）
-PIKPAK_REMOTE="pikpak:vps/backup"
-ONEDRIVE_REMOTE="onedrive:vps/backup"
-OSS_REMOTE="oss:apdd/vps/backup"
-S3_REMOTE="bing:dps666/vps/backup"
+# 远端列表（每项写完整 remote:路径；路径尾部不要加斜杠）
+REMOTES=(
+  "oss:apdd/vps/backup"
+  "bing:dps666/vps/backup"
+)
+
+# 可选：是否允许为空列表（默认不允许）
+ALLOW_EMPTY_REMOTES=0
 
 # 排除模式 — 请根据需求编辑
 ROOT_EXCLUDES=(
@@ -79,7 +82,14 @@ echo "  - 删除中间文件"
 rm -f root.tar.gz home.tar.gz crontab.txt
 
 # 6. 上传至各远端并清理旧备份
-for REMOTE in "${PIKPAK_REMOTE}" "${ONEDRIVE_REMOTE}" "${OSS_REMOTE}" "${S3_REMOTE}"; do
+# 若不允许空列表，提前拦截
+if (( ${#REMOTES[@]} == 0 )) && (( ALLOW_EMPTY_REMOTES == 0 )); then
+  echo "错误：REMOTES 为空，请在配置区添加至少一个远端。"
+  exit 1
+fi
+
+for REMOTE in "${REMOTES[@]}"; do
+  [[ -z "${REMOTE// /}" ]] && continue
   echo "  - 上传 ${FINAL_TAR} → ${REMOTE}"
   if rclone copy "${FINAL_TAR}" "${REMOTE}/"; then
     echo "    > 上传成功"

@@ -4,6 +4,14 @@ set -euo pipefail
 ### 恢复脚本：restore_hk_tar.sh ###
 # 用途：从 rclone 远端下载并恢复 vps 备份（tar 归档）
 
+# ===========特定配置===============
+DEFAULT_REMOTE_PATH="vps/backup"
+
+declare -A REMOTE_PATH_MAP=(
+  ["oss"]="apdd/vps/backup"
+  ["bing"]="dps666/vps/backup"
+)
+# =================================
 
 # 1. 检查 rclone 是否安装
 if ! command -v rclone >/dev/null 2>&1; then
@@ -28,7 +36,9 @@ select REMOTE in "${REMOTE_LIST[@]}"; do
   fi
 done
 
-REMOTE_PATH="vps/backup"
+# 根据 remote 选择路径：命中映射则用映射，否则用默认
+REMOTE_PATH="${REMOTE_PATH_MAP[$REMOTE]:-$DEFAULT_REMOTE_PATH}"
+echo "使用远端路径：${REMOTE}:${REMOTE_PATH}"
 
 # 3. 获取远端目录中的所有备份文件
 echo "获取 ${REMOTE}:${REMOTE_PATH} 目录下的备份文件..."
