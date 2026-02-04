@@ -6,8 +6,9 @@ set -euo pipefail
 MAX_BACKUPS=2
 
 # rclone 目标目录（路径尾部不要加斜杠）
-PIKPAK_REMOTE="pikpak:vps/backup"
-ONEDRIVE_REMOTE="onedrive:vps/backup"
+# PIKPAK_REMOTE="pikpak:vps/backup"
+# ONEDRIVE_REMOTE="onedrive:vps/backup"
+OSS_REMOTE="oss:apdd/vps/backup"
 S3_REMOTE="bing:dps666/vps/backup"
 
 # 排除模式 — 请根据需求编辑
@@ -78,7 +79,7 @@ echo "  - 删除中间文件"
 rm -f root.tar.gz home.tar.gz crontab.txt
 
 # 6. 上传至各远端并清理旧备份
-for REMOTE in "${PIKPAK_REMOTE}" "${ONEDRIVE_REMOTE}" "${S3_REMOTE}"; do
+for REMOTE in "${PIKPAK_REMOTE}" "${ONEDRIVE_REMOTE}" "${OSS_REMOTE}" "${S3_REMOTE}"; do
   echo "  - 上传 ${FINAL_TAR} → ${REMOTE}"
   if rclone copy "${FINAL_TAR}" "${REMOTE}/"; then
     echo "    > 上传成功"
