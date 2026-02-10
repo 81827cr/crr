@@ -2,7 +2,15 @@
 set -e
 
 SCRIPT_NAME="$(basename "$0")"
-IPV4=$(curl -4 -s ip.sb || echo "<你的服务器IP>")
+
+IPV4=$(
+  curl -4 -fsS --connect-timeout 2 --max-time 4 ip.sb 2>/dev/null \
+  || ip -4 route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}' \
+  || hostname -I 2>/dev/null | awk '{print $1}'
+)
+IPV4="${IPV4:-127.0.0.1}"
+
+
 
 function ensure_root() {
     if [ "$(id -u)" -ne 0 ]; then
