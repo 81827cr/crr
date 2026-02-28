@@ -142,7 +142,6 @@ init_firewall(){
     ensure_chain ip6tables "$V6_DU"
     ensure_jump_first ip6tables DOCKER-USER "$V6_DU"
     ensure_anchor_basics ip6tables "$V6_DU"
-    allow_docker_internal ip6tables "$V6_DU"
   fi
 
   log "锚链 OK"
