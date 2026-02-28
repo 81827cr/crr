@@ -94,6 +94,18 @@ ensure_anchor_basics(){
     || "$tool" -I "$anchor" 2 -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
 }
 
+allow_docker_internal(){
+  local tool="$1" anchor="$2"
+
+  # docker0 放在 basics 后面
+  rule_exists "$tool" "$anchor" -i docker0 -j RETURN || "$tool" -A "$anchor" -i docker0 -j RETURN
+  rule_exists "$tool" "$anchor" -o docker0 -j RETURN || "$tool" -A "$anchor" -o docker0 -j RETURN
+
+  # bridged 转发放行（容错）
+  "$tool" -C "$anchor" -m physdev --physdev-is-bridged -j RETURN >/dev/null 2>&1 \
+    || "$tool" -A "$anchor" -m physdev --physdev-is-bridged -j RETURN 2>/dev/null || true
+}
+
 ensure_docker_user_v6_hook(){
   ip6tables -N DOCKER-USER 2>/dev/null || true
   rule_exists ip6tables DOCKER-USER -j RETURN || ip6tables -A DOCKER-USER -j RETURN
@@ -111,6 +123,7 @@ init_firewall(){
   if chain_exists iptables DOCKER-USER; then
     ensure_jump_first iptables DOCKER-USER "$V4_DU"
     ensure_anchor_basics iptables "$V4_DU"
+    allow_docker_internal iptables "$V4_DU"
   fi
 
   if have ip6tables; then
@@ -122,6 +135,7 @@ init_firewall(){
     ensure_chain ip6tables "$V6_DU"
     ensure_jump_first ip6tables DOCKER-USER "$V6_DU"
     ensure_anchor_basics ip6tables "$V6_DU"
+    allow_docker_internal ip6tables "$V6_DU"
   fi
 
   log "锚链 OK"
