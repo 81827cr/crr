@@ -37,12 +37,12 @@ function pause_and_back() {
 
 function install_packages() {
   echo -e "${BLUE}默认安装的包如下：${NC}"
-  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq fuse3 iperf3 zip vim screen git net-tools cron sudo ufw libatomic1${NC}"
+  echo -e "${YELLOW}curl socat wget iproute2 quota at bc jq fuse3 iperf3 zip vim screen git net-tools cron sudo libatomic1${NC}"
   echo -ne "${YELLOW}请输入你不想安装的包（用空格分隔，可留空）：${NC}"
   read exclude
 
   EXCLUDE_ARRAY=($exclude)
-  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq fuse3 iperf3 zip vim screen git net-tools cron sudo ufw libatomic1)
+  ALL_PACKAGES=(curl socat wget iproute2 quota at bc jq fuse3 iperf3 zip vim screen git net-tools cron sudo libatomic1)
 
   INSTALL_LIST=()
   for pkg in "${ALL_PACKAGES[@]}"; do
@@ -84,6 +84,7 @@ function nezha_config()   { run_remote "https://a.dps.dpdns.org/crr/sh/nezha_con
 function test()           { run_remote "https://a.dps.dpdns.org/crr/sh/test.sh"; }
 function f2b_panel()      { run_remote "https://a.dps.dpdns.org/crr/sh/f2b_panel.sh"; }
 function net_stack()      { run_remote "https://a.dps.dpdns.org/crr/sh/net_stack.sh"; }
+function ipwl()           { run_remote "https://a.dps.dpdns.org/crr/sh/ipwl.sh"; }
 # ======================================================================================================================
 function install_xray()   { run_remote "https://a.dps.dpdns.org/crr/sh/xray/install_xray.sh"; }
 function reinstall()      { run_remote "https://a.dps.dpdns.org/crr/sh/reinstall.sh"; }
@@ -288,6 +289,7 @@ function show_help() {
   echo -e "  开启 ssh 密钥登录     ${CYAN}p ssh${NC}"
   echo -e "  端口转发              ${CYAN}p iptables${NC}"
   echo -e "  切换 ipv4/v6 优先级   ${CYAN}p v4${NC}"
+  echo -e "  设置端口白名单        ${CYAN}p ipwl${NC}"
   echo
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
@@ -319,6 +321,7 @@ if [[ $# -ge 1 ]]; then
     ssh)       set_ssh ;;
     f2b)       f2b_panel ;;
     v4)        net_stack ;;
+    ipwl)      ipwl ;;
     backup)    backup ;;
     recover)   recover ;;
     dd)        reinstall ;;
@@ -337,7 +340,7 @@ function show_sys_settings() {
   echo "3.   设置虚拟内存 Swap        4.   设置时区为 Asia/Shanghai"
   echo "5.   开启 BBR 加速            6.   运行安全检查脚本"
   echo "7.   端口转发                 8.   修改 DNS 配置"
-  echo "9.   切换 ipv4/v6 优先级"
+  echo "9.   切换 ipv4/v6 优先级      10.  设置端口白名单"
   echo "------------------------"
   echo "21.   test 测试               22.  一键调优"
   echo "23.  重装系统"
@@ -353,6 +356,7 @@ function show_sys_settings() {
     7) port_forward ;;
     8) set_dns ;;
     9) net_stack ;;
+    10) ipwl ;;
     21) test ;;
     22) one_click_tune ;;
     23) reinstall ;;
