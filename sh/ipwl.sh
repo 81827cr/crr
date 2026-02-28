@@ -17,6 +17,9 @@ V6_DU="IPWL6-DU"
 CONF_DIR="/etc/ipwl"
 CONF_FILE="${CONF_DIR}/policies.conf"
 SERVICE_FILE="/etc/systemd/system/ipwl-apply.service"
+SOURCE_URL="https://a.dps.dpdns.org/crr/sh/ipwl.sh"
+INSTALL_PATH="/usr/local/sbin/ipwl"
+
 SCRIPT_PATH="$(readlink -f "$0" 2>/dev/null || echo "$0")"
 
 have(){ command -v "$1" >/dev/null 2>&1; }
@@ -36,6 +39,22 @@ apt_install(){
   until apt-get install -y -q -o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confdef "$@"; do
     n=$((n+1)); [[ "$n" -ge 3 ]] && return 1; sleep 2
   done
+}
+
+self_install(){
+  local force="${1:-0}"  # 1=强制更新
+  if [[ "${SCRIPT_PATH}" != "${INSTALL_PATH}" || "$force" == "1" ]]; then
+    mkdir -p "$(dirname "$INSTALL_PATH")"
+    tmp="$(mktemp)"
+    if have curl; then
+      curl -fsSL "$SOURCE_URL" -o "$tmp"
+    else
+      apt_install curl
+      curl -fsSL "$SOURCE_URL" -o "$tmp"
+    fi
+    install -m 0755 "$tmp" "$INSTALL_PATH"
+    rm -f "$tmp"
+  fi
 }
 
 ensure_deps_and_persist(){
@@ -249,8 +268,9 @@ apply_one(){
 }
 
 ensure_service_auto(){
-  # 你要“脚本运行就自动装开机自启”：这里做“创建+enable”，不 start，避免卡住
   if ! have systemctl; then return 0; fi
+
+  self_install
 
   if [[ ! -f "$SERVICE_FILE" ]]; then
     cat > "$SERVICE_FILE" <<SVC
@@ -261,19 +281,27 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=${SCRIPT_PATH} apply
+ExecStart=/usr/local/sbin/ipwl apply
 RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
 SVC
-    systemctl daemon-reload >/dev/null 2>&1 || true
+  else
+    # ✅ 关键：修正旧 ExecStart，避免一直跑旧脚本
+    sed -i 's|^ExecStart=.*|ExecStart=/usr/local/sbin/ipwl apply|' "$SERVICE_FILE" || true
   fi
 
+  systemctl daemon-reload >/dev/null 2>&1 || true
   systemctl enable ipwl-apply.service >/dev/null 2>&1 || true
 }
 
 apply_all(){
+  # 只有当不是从 INSTALL_PATH 运行时（例如 curl|bash），才强制更新安装版
+  if [[ "${SCRIPT_PATH}" != "${INSTALL_PATH}" ]]; then
+    self_install 1
+  fi
+
   ensure_deps_and_persist
   ensure_conf
   init_firewall
