@@ -101,13 +101,14 @@ ensure_anchor_basics(){
 allow_docker_internal(){
   local tool="$1" anchor="$2"
 
-  # 只放行 docker bridge 的转发流量（容器互通/bridge 网络）
-  rule_exists "$tool" "$anchor" -i docker0 -j RETURN || "$tool" -A "$anchor" -i docker0 -j RETURN
-  rule_exists "$tool" "$anchor" -o docker0 -j RETURN || "$tool" -A "$anchor" -o docker0 -j RETURN
+  # 只放行容器互通：docker0 -> docker0
+  rule_exists "$tool" "$anchor" -i docker0 -o docker0 -j RETURN \
+    || "$tool" -A "$anchor" -i docker0 -o docker0 -j RETURN
 
-  # 覆盖 br-xxxx 的自定义 bridge 网络（容错：没有 physdev 模块也不报错）
-  "$tool" -C "$anchor" -m physdev --physdev-is-bridged -j RETURN >/dev/null 2>&1 \
-    || "$tool" -A "$anchor" -m physdev --physdev-is-bridged -j RETURN 2>/dev/null || true
+  # 如果你有自定义 bridge br-xxxx，也只放行 br -> br（而不是所有 bridged）
+  # 注意：physdev 模块未必存在，所以仍然容错
+  "$tool" -C "$anchor" -m physdev --physdev-in br+ --physdev-out br+ -j RETURN >/dev/null 2>&1 \
+    || "$tool" -A "$anchor" -m physdev --physdev-in br+ --physdev-out br+ -j RETURN 2>/dev/null || true
 }
 
 ensure_docker_user_v6_hook(){
