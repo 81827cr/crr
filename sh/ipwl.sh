@@ -80,6 +80,10 @@ save_rules(){
 chain_exists(){ local tool="$1" chain="$2"; "$tool" -S "$chain" >/dev/null 2>&1; }
 rule_exists(){ local tool="$1"; shift; "$tool" -C "$@" >/dev/null 2>&1; }
 ensure_chain(){ local tool="$1" chain="$2"; "$tool" -N "$chain" 2>/dev/null || true; }
+flush_chain(){
+  local tool="$1" ch="$2"
+  "$tool" -F "$ch" >/dev/null 2>&1 || true
+}
 
 ensure_jump_first(){
   local tool="$1" from="$2" to="$3"
@@ -123,10 +127,12 @@ init_firewall(){
   log "初始化锚链..."
 
   ensure_chain iptables "$V4_IN"
+  flush_chain iptables "$V4_IN"
   ensure_jump_first iptables INPUT "$V4_IN"
   ensure_anchor_basics iptables "$V4_IN"
 
   ensure_chain iptables "$V4_DU"
+  flush_chain iptables "$V4_DU"
   if chain_exists iptables DOCKER-USER; then
     ensure_jump_first iptables DOCKER-USER "$V4_DU"
     ensure_anchor_basics iptables "$V4_DU"
