@@ -153,6 +153,16 @@ normalize_csv(){
   echo "$s"
 }
 
+get_docker_v4_subnets() {
+  # 输出形如：172.17.0.0/16 172.18.0.0/16 ...
+  docker network ls -q 2>/dev/null \
+  | while read -r nid; do
+      docker network inspect "$nid" --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}' 2>/dev/null
+    done \
+  | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$' \
+  | sort -u
+}
+
 policy_chain_name(){
   local proto="$1" port="$2"
   echo "${TAG}-P-${port}-${proto^^}"
@@ -172,6 +182,20 @@ rebuild_policy_chain(){
   ensure_chain "$tool" "$pchain"
   "$tool" -F "$pchain" >/dev/null 2>&1 || true
 
+  # 先放行：本机回环/已建立连接（可选，但安全）
+  if [[ "$tool" == "iptables" ]]; then
+    "$tool" -A "$pchain" -s 127.0.0.1/32 -p "$proto" -m "$proto" --dport "$port" -j RETURN
+  fi
+
+  # ✅ 放行：所有 docker bridge 子网（容器互通不被端口白名单误伤）
+  if [[ "$tool" == "iptables" ]] && have docker; then
+    while read -r sn; do
+      [[ -z "$sn" ]] && continue
+      "$tool" -A "$pchain" -s "$sn" -p "$proto" -m "$proto" --dport "$port" -j RETURN
+    done < <(get_docker_v4_subnets)
+  fi
+
+  # 用户白名单
   if [[ -n "${csv:-}" && "${csv:-}" != "-" ]]; then
     IFS=',' read -r -a ips <<< "$csv"
     local ip
@@ -181,7 +205,7 @@ rebuild_policy_chain(){
     done
   fi
 
-  # 端口最终拦截：不是白名单的一律 DROP
+  # 最终拦截：其他全部 DROP
   "$tool" -A "$pchain" -p "$proto" -m "$proto" --dport "$port" -j DROP
 }
 
