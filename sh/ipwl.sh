@@ -97,11 +97,18 @@ ensure_anchor_basics(){
 allow_docker_internal(){
   local tool="$1" anchor="$2"
 
-  # docker0 放在 basics 后面
+  # 1) 放行 docker 默认桥及常见 docker 私网段（覆盖 bridge 网络）
+  # 172.16.0.0/12 覆盖 172.16~172.31（常见 docker network）
+  rule_exists "$tool" "$anchor" -s 172.16.0.0/12 -j RETURN || "$tool" -A "$anchor" -s 172.16.0.0/12 -j RETURN
+  # 192.168.0.0/16（有些环境 docker 也用）
+  rule_exists "$tool" "$anchor" -s 192.168.0.0/16 -j RETURN || "$tool" -A "$anchor" -s 192.168.0.0/16 -j RETURN
+  # 10.0.0.0/8（部分自定义网络）
+  rule_exists "$tool" "$anchor" -s 10.0.0.0/8 -j RETURN || "$tool" -A "$anchor" -s 10.0.0.0/8 -j RETURN
+
+  # 2) 如果你还想更保险：放行来自 docker0/br-* 的流量（可选）
   rule_exists "$tool" "$anchor" -i docker0 -j RETURN || "$tool" -A "$anchor" -i docker0 -j RETURN
   rule_exists "$tool" "$anchor" -o docker0 -j RETURN || "$tool" -A "$anchor" -o docker0 -j RETURN
 
-  # bridged 转发放行（容错）
   "$tool" -C "$anchor" -m physdev --physdev-is-bridged -j RETURN >/dev/null 2>&1 \
     || "$tool" -A "$anchor" -m physdev --physdev-is-bridged -j RETURN 2>/dev/null || true
 }
