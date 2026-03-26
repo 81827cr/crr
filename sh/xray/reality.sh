@@ -79,19 +79,17 @@ fi
 # dest 选项（默认1）
 cat <<EOF
 选择 dest (会自动在末尾加 :443)（默认 1）：
-  1) icloud.cdn-apple.com
-  2) swdist.apple.com
-  3) www.icloud.com
-  4) 自行输入
+  1) swdist.apple.com
+  2) www.icloud.com
+  3) 自行输入
 EOF
 CHOICE=$(ask "请输入 1-4（回车默认1）：")
 if [ -z "$CHOICE" ]; then CHOICE=1; fi
 case "$CHOICE" in
-  1) SNI_BASE="icloud.cdn-apple.com" ;;
-  2) SNI_BASE="swdist.apple.com" ;;
-  3) SNI_BASE="www.icloud.com" ;;
-  4) SNI_BASE=$(ask "请输入自定义域名（例如 example.com）：") ;;
-  *) echo "无效选择，使用 icloud.cdn-apple.com"; SNI_BASE="icloud.cdn-apple.com" ;;
+  1) SNI_BASE="swdist.apple.com" ;;
+  2) SNI_BASE="www.icloud.com" ;;
+  3) SNI_BASE=$(ask "请输入自定义域名（例如 example.com）：") ;;
+  *) echo "无效选择，使用 swdist.apple.com"; SNI_BASE="swdist.apple.com" ;;
 esac
 DEST="${SNI_BASE}:443"
 SERVERNAME="$SNI_BASE"
