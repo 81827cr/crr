@@ -85,6 +85,7 @@ function test()           { run_remote "https://a.dps.dpdns.org/crr/sh/test.sh";
 function f2b_panel()      { run_remote "https://a.dps.dpdns.org/crr/sh/f2b_panel.sh"; }
 function net_stack()      { run_remote "https://a.dps.dpdns.org/crr/sh/net_stack.sh"; }
 function ipwl()           { run_remote "https://a.dps.dpdns.org/crr/sh/ipwl.sh"; }
+function install_motd()   { run_remote "https://a.dps.dpdns.org/crr/sh/install_motd.sh"; }
 # ======================================================================================================================
 function install_xray()   { run_remote "https://a.dps.dpdns.org/crr/sh/xray/install_xray.sh"; }
 function reinstall()      { run_remote "https://a.dps.dpdns.org/crr/sh/reinstall.sh"; }
@@ -290,6 +291,7 @@ function show_help() {
   echo -e "  端口转发              ${CYAN}p iptables${NC}"
   echo -e "  切换 ipv4/v6 优先级   ${CYAN}p v4${NC}"
   echo -e "  设置端口白名单        ${CYAN}p ipwl${NC}"
+  echo -e "  登录信息界面          ${CYAN}p motd${NC}"
   echo
   echo -e "${CYAN}备份恢复${NC}"
   echo "------------------------"
@@ -322,6 +324,7 @@ if [[ $# -ge 1 ]]; then
     f2b)       f2b_panel ;;
     v4)        net_stack ;;
     ipwl)      ipwl ;;
+    motd)      install_motd ;;
     backup)    backup ;;
     recover)   recover ;;
     dd)        reinstall ;;
@@ -341,8 +344,9 @@ function show_sys_settings() {
   echo "5.   开启 BBR 加速            6.   运行安全检查脚本"
   echo "7.   端口转发                 8.   修改 DNS 配置"
   echo "9.   切换 ipv4/v6 优先级      10.  设置端口白名单"
+  echo "11.  登录信息界面"
   echo "------------------------"
-  echo "21.   test 测试               22.  一键调优"
+  echo "21.  test 测试               22.  一键调优"
   echo "23.  重装系统"
   echo "------------------------"
   read -p "请输入操作编号: " sub
@@ -357,6 +361,7 @@ function show_sys_settings() {
     8) set_dns ;;
     9) net_stack ;;
     10) ipwl ;;
+    11) install_motd ;;
     21) test ;;
     22) one_click_tune ;;
     23) reinstall ;;
