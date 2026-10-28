@@ -100,10 +100,13 @@ echo "使用 dest: $DEST, serverName: $SERVERNAME"
 if [ -x "$XRAY_BIN" ]; then
   echo "调用 $XRAY_BIN x25519 生成密钥对..."
   XOUT=$("$XRAY_BIN" x25519 2>/dev/null || true)
-  PRIV_KEY=$(printf "%s" "$XOUT" | awk -F': ' '/Private key/ {print $2}' | tr -d '
-')
-  PUB_KEY=$(printf "%s" "$XOUT" | awk -F': ' '/Public key/ {print $2}' | tr -d '
-')
+  PRIV_KEY=$(printf '%s\n' "$XOUT" |
+    awk -F': *' '/^PrivateKey:/ {print $2; exit}' |
+    tr -d '\r')
+
+  PUB_KEY=$(printf '%s\n' "$XOUT" |
+    awk -F': *' '/^Password \(PublicKey\):/ {print $2; exit}' |
+    tr -d '\r')
   if [ -z "$PRIV_KEY" ] || [ -z "$PUB_KEY" ]; then
     echo "错误：无法通过 $XRAY_BIN x25519 获取密钥对，取消。" >&2
     exit 1
